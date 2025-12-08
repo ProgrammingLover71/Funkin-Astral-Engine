@@ -3,7 +3,8 @@
 - *better scoring*,
 - *more in-game stats*,
 - *better menus*, and
-- *multiplayer*, <br>
+- *multiplayer*,
+
 while also introducing cool stuff like revamped menus, editors, easier mod structure, and most importantly... <br>
 *performance*.
 
