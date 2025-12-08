@@ -3,8 +3,8 @@
 - *better scoring*,
 - *more in-game stats*,
 - *better menus*, and
-- *multiplayer*,
-while also introducing cool stuff like revamped menus, editors, easier mod structure, and most importantly...
+- *multiplayer*, \n
+while also introducing cool stuff like revamped menus, editors, easier mod structure, and most importantly... \n
 *performance*.
 
 # Installing
