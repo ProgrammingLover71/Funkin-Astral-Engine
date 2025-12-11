@@ -145,6 +145,7 @@ class ImageAsset:
         
         # If it's a dynamic image (texture atlas), adjust the brightness of each texture in the list
         else:
+            brightened_texture = []   # To prevent appending to None :}
             for tex in self.texture:
                 pil_image = tex.image
                 enhancer = ImageEnhance.Brightness(pil_image)
