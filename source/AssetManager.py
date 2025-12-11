@@ -1,5 +1,4 @@
 # Friday Night Funkin' Astral Engine
-# Copyright (c) 2025 Wind Rider, All rights reserved.
 
 ### Asset Manager Module
 # This module handles the loading and management of game assets such as images, sounds, and fonts.
@@ -209,11 +208,10 @@ class FontAsset:
     Represents a font asset.
     Attributes:
         `font_path` (str): The file path to the font.
-        `image` (ImageAsset | None): The loaded font image asset (as a spritesheet).
+        `image` (ImageAsset | None): The loaded font image asset (as a TTF).
     """
     def __init__(self, font_path: str):
         self.font_path = font_path
-        self.image: ImageAsset = None
 
     @staticmethod
     def load(font_path: str):
@@ -225,9 +223,8 @@ class FontAsset:
         Returns:
             `FontAsset`: The loaded font asset.
         """
-        # You guessed it, the fonts are stored as sprite sheets (god damn it)
         asset = FontAsset(font_path)
-        asset.image = ImageAsset.load(font_path)
+        arc.load_font(font_path)     # Load the font into Arcade's font registry
         return asset
 
 

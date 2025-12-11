@@ -1,5 +1,4 @@
 # Friday Night Funkin' Astral Engine
-# Copyright (c) 2025 Wind Rider, All rights reserved.
 
 ### Title State Module
 # This module defines the TitleState class, which represents the title screen of the game.
@@ -36,17 +35,15 @@ class TitleState(arc.View):
         self.asset_manager = asset_manager
         self.gf_animation_frame = 0
         self.logo_animation_frame = 0
-        self.logo_animation_factor = 6 / 60    # 6 FPS animation at 60 FPS update rate (just as in V-Slice FNF)
-        self.gf_animation_factor = 12 / 60    # 12 FPS animation at 60 FPS update rate (just as in V-Slice FNF)
+        self.logo_animation_factor = 12 * (60 / 102) / 60    # 12 FPS animation but scaled to the beat, at 60 FPS update rate (just as in V-Slice FNF)
+        self.gf_animation_factor =   24 * (60 / 102) / 60    # 24 FPS animation but scaled to the beat, at 60 FPS update rate (just as in V-Slice FNF)
         
-        self.intro_timer = 0.0
         self.intro_line0, self.intro_line1 = get_random_intro_line(self.asset_manager).split('--')
 
         self.rendering = False   # Flag to check if the scene started rendering
-        self.start()
         
 
-    def start(self):
+    def setup(self):
         # Load title screen assets
         self.title_music = self.asset_manager.load_sound("mainMenu/music", "assets/sounds/TitleMenu/freakyMenu.ogg")
 
@@ -62,65 +59,83 @@ class TitleState(arc.View):
         self.title_image.apply_scale(0.8)
         self.gf_image.apply_scale(0.8)
         
-        self.intro_timer = -4.5
+        # Intro shit (way too much WHY GOD WHY)
+        self.intro_timer = 0
+        self.beat = -1
+        self.song_bpm = 102
+        self.secs_per_beat = 60 / self.song_bpm
+        self.cool_text = ""     # Currently displayed intro text
+        # Load the VCR font and then make the Text object
+        self.vcr_font = self.asset_manager.load_font("VCR", "assets/fonts/vcr.ttf")
+        self.cool_text_arc = arc.Text(
+            text = "",
+            x = 0,
+            y = self.height / 2 + 60,
+            color = arc.color.WHITE,
+            font_size = 28,
+            align = "center",
+            width = 1200,
+            multiline = True,
+            font_name="VCR OSD Mono"   # what a goofy ahh name
+        )
+
+        # Values for the flashbang
+        self.flash_alpha = 255.0
+        self.flash_img = self.asset_manager.load_image("mainMenu/flashbang", "assets/images/shared/flashbang.png")
+        self.flash = arc.Sprite(self.flash_img.texture, center_x=self.width / 2, center_y=self.height / 2)          # Center the sprite (i'm an idiot and forgot to set the center)
+        self.flash_group = arc.SpriteList()
+        self.flash_group.append(self.flash)
 
     
-    def draw_intro(self):
-        x = 0
-        y = self.height / 2 + 60
-
-        text1 = [
-            "The Funkin' Crew Inc.",
-            "Presents",
-            ""
-        ]
-
-        text2 = [
-            "",
-            "In association with...",
-            "Newgrounds babyyyy"
-        ]
-
-        # Get a random line from the intro text list
-        text3 = [
-            self.intro_line0,
-            self.intro_line1,
-            ""
-        ]
-
-        text4 = [
-            "Astral Engine by...",
-            "",
-            "Wind Rider (help me plz)"
-        ]
-
-        text5 = [
-            "Friday Night",
-            "Funkin'",
-            "(the sexy ass game)"
-        ]
-
-        if self.intro_timer < 2.0:
-            display_text = arc.Text('\n'.join(text1), x, y)
-        elif self.intro_timer < 4.0:
-            display_text = arc.Text('\n'.join(text2), x, y)
-        elif self.intro_timer < 6.0:
-            display_text = arc.Text('\n'.join(text3), x, y)
-        elif self.intro_timer < 8.0:
-            display_text = arc.Text('\n'.join(text4), x, y)
-        elif self.intro_timer < 9.0:
-            display_text = arc.Text('\n'.join(text5[:2]), x, y) # Hide the engine part for a bit
-        elif self.intro_timer < 10.0:
-            display_text = arc.Text('\n'.join(text5), x, y)
-        else:
+    def beat_hit(self):
+        def addText(text: str):
+            self.cool_text += text + "\n"
+        
+        def clearText():
+            self.cool_text = ""
+        
+        if self.beat == 1:
+            addText("The")
+        elif self.beat == 2:
+            addText("Funkin Crew Inc")
+        
+        elif self.beat == 3:
+            addText("presents")
+        
+        elif self.beat == 4:
+            clearText()
+        
+        elif self.beat == 5:
+            addText("In association")
+        elif self.beat == 6:
+            addText("with")
+        elif self.beat == 7:
+            addText("Newgrounds")
+        
+        elif self.beat == 8:
+            clearText()
+        
+        elif self.beat == 9:
+            addText(self.intro_line0)
+        elif self.beat == 11:
+            addText(self.intro_line1)
+        elif self.beat == 12:
+            clearText()
+        
+        elif self.beat == 13:
+            addText("Friday")
+        elif self.beat == 14:
+            if self.intro_line0 == "trending":
+                addText("Nigth")
+            else:
+                addText("Night")
+        elif self.beat == 15:
+            addText("Funkin")
+        elif self.beat >= 16:
             return
         
-        display_text.font_size = 48
-        display_text.color = arc.color.WHITE
-        display_text.width = 1280
-        display_text.align = "center"
-        display_text.multiline = True
-        display_text.draw()
+        self.cool_text_arc.text = self.cool_text
+        
 
 
     def draw_main(self):
@@ -139,20 +154,36 @@ class TitleState(arc.View):
         self.gf_animation_frame   += self.gf_animation_factor
         self.logo_animation_frame += self.logo_animation_factor
     
+
     def on_draw(self):
         self.clear()
 
         # On the first render, start playing the title music
         if not self.rendering:
             self.rendering = True
+            # Reset the text and timer because for some reason the lag at the start stacks the calls up
+            self.beat = 0
+            self.intro_timer = 0
+            self.cool_text_arc.text = ""
+            self.flash_alpha = 1.0
+            # Start the badass music
             arc.play_sound(self.title_music.sound, loop=True)
 
-        if self.intro_timer < 10.0:
-            self.draw_intro()
-        else:
+        if self.beat >= 16:
             self.draw_main()
+            self.flash_group.draw()
+            self.flash.alpha -= 128 / 60 if self.flash_alpha > 0 else 0
+        else:
+            self.cool_text_arc.draw() # Draw the intro text becausi Arcade likes the draw() call here (fk this man)
+        print(self.flash.alpha)
         
     def on_update(self, delta_time: float):
         self.intro_timer += delta_time
-        #print(self.intro_timer)
+        if self.intro_timer >= self.secs_per_beat:
+            self.intro_timer -= self.secs_per_beat
+            self.beat += 1
+            self.beat_hit()
             
+
+    # Just a constant to indicate continuing to main drawing
+    CONTINUE_MAIN = "continue_main"

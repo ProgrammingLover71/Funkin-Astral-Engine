@@ -1,5 +1,4 @@
 # Friday Night Funkin' Astral Engine
-# Copyright (c) 2025 Wind Rider, All rights reserved.
 
 ### Main Module
 # This is the main entry point for the Astral Engine application.
@@ -14,6 +13,9 @@ class Astral(arc.Window):
         self.asset_manager = AssetManager()
         self.title_state = TitleState(self.asset_manager, self)
         self.show_view(self.title_state)
+    
+    def setup(self):
+        self.current_view.setup()
 
     def on_draw(self):
         self.current_view.on_draw()
@@ -23,4 +25,5 @@ if __name__ == "__main__":
     print("Copyright (c) 2025 Wind Rider")
     app = Astral()
     print("ladies 'n' gentlemen its time fore some funkin' :P")
+    app.setup()
     arc.run()
