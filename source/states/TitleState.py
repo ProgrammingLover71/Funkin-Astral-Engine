@@ -7,6 +7,7 @@
 from AssetManager import *
 from PIL import ImageEnhance
 import math
+import random
 
 #========== Drawing utility ==========#
 
@@ -25,7 +26,6 @@ def draw_tex(view: arc.View, texture: arc.Texture, x: float, y: float, angle: fl
 def get_random_intro_line(asset_manager: AssetManager) -> str:
     intro_text_asset = asset_manager.load_text_file("introText", "assets/introText.txt")
     intro_lines = intro_text_asset.content.splitlines()
-    import random
     return random.choice(intro_lines)
 
 
