@@ -22,8 +22,8 @@ class Astral(arc.Window):
 
 if __name__ == "__main__":
     print("Friday Night Funkin' - Astral Engine [Alpha Build]")
-    print("Copyright (c) 2025 Wind Rider")
+    print("hold up let it cook ;)")
     app = Astral()
-    print("ladies 'n' gentlemen its time fore some funkin' :P")
     app.setup()
     arc.run()
+    print("ladies 'n' gentlemen its time for some funkin' :P")

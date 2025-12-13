@@ -86,6 +86,18 @@ class TitleState(arc.View):
         self.flash_group = arc.SpriteList()
         self.flash_group.append(self.flash)
 
+        # Menu text
+        self.menu_text = arc.Text(
+            text = "Press [Enter] to Start",
+            x = self.width / 2,
+            y = 30,
+            color = arc.color.WHITE,
+            font_size = 32,
+            anchor_x = "center",
+            font_name = "VCR OSD Mono"
+        )
+        
+
     
     def beat_hit(self):
         def addText(text: str):
@@ -101,6 +113,10 @@ class TitleState(arc.View):
         
         elif self.beat == 3:
             addText("presents")
+            addText("")
+            addText("")
+            addText("")
+            addText("n wind rider too :P")
         
         elif self.beat == 4:
             clearText()
@@ -131,8 +147,12 @@ class TitleState(arc.View):
                 addText("Night")
         elif self.beat == 15:
             addText("Funkin")
+            addText("")
+            addText("")
+            addText("")
+            addText("thx for playing astral guyz :}")
         elif self.beat >= 16:
-            return
+            self.menu_text.font_size = 36   # Enlarge the menu text a bit (just a little bit)
         
         self.cool_text_arc.text = self.cool_text
         
@@ -171,18 +191,21 @@ class TitleState(arc.View):
 
         if self.beat >= 16:
             self.draw_main()
+            self.menu_text.draw()
             self.flash_group.draw()
             self.flash.alpha -= 128 / 60 if self.flash_alpha > 0 else 0
         else:
             self.cool_text_arc.draw() # Draw the intro text becausi Arcade likes the draw() call here (fk this man)
-        print(self.flash.alpha)
         
+
+
     def on_update(self, delta_time: float):
         self.intro_timer += delta_time
         if self.intro_timer >= self.secs_per_beat:
             self.intro_timer -= self.secs_per_beat
             self.beat += 1
             self.beat_hit()
+        self.menu_text.font_size -= (self.menu_text.font_size - 32) * 0.1  # Bring the font size back to normal smoothly
             
 
     # Just a constant to indicate continuing to main drawing
