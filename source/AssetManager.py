@@ -170,6 +170,8 @@ class ImageAsset:
         elif isinstance(self.texture, list):
             self.texture = [ImageAsset.scale_texture(tex, scale) for tex in self.texture]
 
+        return self
+
 
 
 ###============ Sound Asset Class ============###

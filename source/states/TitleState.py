@@ -35,8 +35,8 @@ class TitleState(arc.View):
         self.asset_manager = asset_manager
         self.gf_animation_frame = 0
         self.logo_animation_frame = 0
-        self.logo_animation_factor = 12 * (60 / 102) / 60    # 12 FPS animation but scaled to the beat, at 60 FPS update rate (just as in V-Slice FNF)
-        self.gf_animation_factor =   24 * (60 / 102) / 60    # 24 FPS animation but scaled to the beat, at 60 FPS update rate (just as in V-Slice FNF)
+        self.logo_animation_factor = 12 / 60    # 12 FPS animation but scaled to the beat (maybe?), at 60 FPS update rate (just as in V-Slice FNF)
+        self.gf_animation_factor =   24 / 60    # 24 FPS animation but scaled to the beat (maybe?), at 60 FPS update rate (just as in V-Slice FNF)
         
         self.intro_line0, self.intro_line1 = get_random_intro_line(self.asset_manager).split('--')
 
@@ -44,15 +44,18 @@ class TitleState(arc.View):
         
 
     def setup(self):
-        # Load title screen assets
-        self.title_music = self.asset_manager.load_sound("mainMenu/music", "assets/sounds/TitleMenu/freakyMenu.ogg")
+        self.flash_group = arc.SpriteList()
+        self.ngl_group   = arc.SpriteList()
 
-        self.title_image  = self.asset_manager.load_image("mainMenu/title", "assets/images/TitleMenu/logoBumpin.png")   # Title Logo
-        self.gf_image     = self.asset_manager.load_image("mainMenu/gf",    "assets/images/TitleMenu/gfDanceTitle.png")  # Girlfriend on Speakers Image
+        # Load title screen assets
+        self.title_music = self.asset_manager.load_sound("titleScreen/music", "assets/sounds/TitleMenu/freakyMenu.ogg")
+
+        self.title_image  = self.asset_manager.load_image("titleScreen/title", "assets/images/TitleMenu/logoBumpin.png")   # Title Logo
+        self.gf_image     = self.asset_manager.load_image("titleScreen/gf",    "assets/images/TitleMenu/gfDanceTitle.png")  # Girlfriend on Speakers Image
         self.stage_images = [
-            self.asset_manager.load_image(f"mainMenu/stage-back",     f"assets/images/shared/stageback.png").apply_brightness(0.4),
-            self.asset_manager.load_image(f"mainMenu/stage-curtains", f"assets/images/shared/stagecurtains.png").apply_brightness(0.4),
-            self.asset_manager.load_image(f"mainMenu/stage-front",    f"assets/images/shared/stagefront.png").apply_brightness(0.4),
+            self.asset_manager.load_image(f"titleScreen/stage-back",     f"assets/images/shared/stageback.png").apply_brightness(0.4),
+            self.asset_manager.load_image(f"titleScreen/stage-curtains", f"assets/images/shared/stagecurtains.png").apply_brightness(0.4),
+            self.asset_manager.load_image(f"titleScreen/stage-front",    f"assets/images/shared/stagefront.png").apply_brightness(0.4),
         ]
 
         # Scale the assets so they're not too big
@@ -79,11 +82,20 @@ class TitleState(arc.View):
             font_name="VCR OSD Mono"   # what a goofy ahh name
         )
 
+        ng_logo_img = self.asset_manager.load_image("titleScreen/ng-logo", "assets/images/TitleMenu/newgrounds_logo.png").apply_scale(0.75)
+        self.ng_logo = arc.Sprite(
+            ng_logo_img.texture, 
+            center_x = self.width / 2 - 40,
+            center_y = 160,
+            angle = 0,
+            visible = False
+        )
+        self.ngl_group.append(self.ng_logo)
+
         # Values for the flashbang
         self.flash_alpha = 255.0
-        self.flash_img = self.asset_manager.load_image("mainMenu/flashbang", "assets/images/shared/flashbang.png")
+        self.flash_img = self.asset_manager.load_image("titleScreen/flashbang", "assets/images/shared/flashbang.png")
         self.flash = arc.Sprite(self.flash_img.texture, center_x=self.width / 2, center_y=self.height / 2)          # Center the sprite (i'm an idiot and forgot to set the center)
-        self.flash_group = arc.SpriteList()
         self.flash_group.append(self.flash)
 
         # Menu text
@@ -109,14 +121,14 @@ class TitleState(arc.View):
         if self.beat == 1:
             addText("The")
         elif self.beat == 2:
-            addText("Funkin Crew Inc")
+            addText("Funkin Crew Inc.")
         
         elif self.beat == 3:
             addText("presents")
             addText("")
             addText("")
             addText("")
-            addText("n wind rider too :P")
+            addText("(Wind Rider too)")
         
         elif self.beat == 4:
             clearText()
@@ -126,10 +138,13 @@ class TitleState(arc.View):
         elif self.beat == 6:
             addText("with")
         elif self.beat == 7:
+            addText("")
             addText("Newgrounds")
+            self.ng_logo.visible = True
         
         elif self.beat == 8:
             clearText()
+            self.ng_logo.visible = False
         
         elif self.beat == 9:
             addText(self.intro_line0)
@@ -152,7 +167,7 @@ class TitleState(arc.View):
             addText("")
             addText("thx for playing astral guyz :}")
         elif self.beat >= 16:
-            self.menu_text.font_size = 36   # Enlarge the menu text a bit (just a little bit)
+            self.menu_text.font_size = 34   # Enlarge the menu text a bit (just a little bit)
         
         self.cool_text_arc.text = self.cool_text
         
@@ -174,6 +189,9 @@ class TitleState(arc.View):
         # Increment animation frames by the animation factors (to effectively animate at desired FPS)
         self.gf_animation_frame   += self.gf_animation_factor
         self.logo_animation_frame += self.logo_animation_factor
+
+        # Draw the main text
+        self.menu_text.draw()
     
 
     def on_draw(self):
@@ -195,15 +213,24 @@ class TitleState(arc.View):
             self.flash.alpha -= 128 / 60 if self.flash_alpha > 0 else 0
         else:
             self.cool_text_arc.draw() # Draw the intro text because Arcade likes the draw() call here (fk this man)
-        print(self.flash.alpha)
         
+        self.ngl_group.draw()
+        
+
     def on_update(self, delta_time: float):
         self.intro_timer += delta_time
+        self.menu_text.font_size -= (self.menu_text.font_size - 32) / 60
         if self.intro_timer >= self.secs_per_beat:
             self.intro_timer -= self.secs_per_beat
             self.beat += 1
             self.beat_hit()
-            
+        
+    
+    def on_key_press(self, key, mods):
+        # Exit the game if we press escape
+        if key == arc.key.ESCAPE:
+            exit(0)
 
-    # Just a constant to indicate continuing to main drawing
-    CONTINUE_MAIN = "continue_main"
+        # Go to the next menu (the main menu) -- too bad it's not implemented yet XD
+        if key == arc.key.ENTER:
+            exit(0)
