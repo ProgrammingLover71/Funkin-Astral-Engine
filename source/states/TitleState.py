@@ -229,8 +229,8 @@ class TitleState(arc.View):
     def on_key_press(self, key, mods):
         # Exit the game if we press escape
         if key == arc.key.ESCAPE:
-            exit(0)
+            arc.exit()
 
         # Go to the next menu (the main menu) -- too bad it's not implemented yet XD
         if key == arc.key.ENTER:
-            exit(0)
+            arc.exit()

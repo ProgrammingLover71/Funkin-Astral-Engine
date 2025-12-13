@@ -19,6 +19,10 @@ class Astral(arc.Window):
 
     def on_draw(self):
         self.current_view.on_draw()
+    
+    def on_key_press(self, symbol, modifiers):
+        return self.current_view.on_key_press(symbol, modifiers)
+
 
 if __name__ == "__main__":
     print("Friday Night Funkin' - Astral Engine [Alpha Build]")
