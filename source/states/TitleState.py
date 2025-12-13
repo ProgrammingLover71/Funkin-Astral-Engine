@@ -178,16 +178,6 @@ class TitleState(arc.View):
 
     def on_draw(self):
         self.clear()
-
-        if self.beat >= 16:
-            self.draw_main()
-            self.flash_group.draw()
-            self.flash.alpha -= 128 / 60 if self.flash_alpha > 0 else 0
-        else:
-            self.cool_text_arc.draw() # Draw the intro text because Arcade likes the draw() call here (fk this man)
-        print(self.flash.alpha)
-        
-    def on_update(self, delta_time: float):
         # On the first render, start playing the title music and do some other one-time shit
         if not self.rendering:
             self.rendering = True
@@ -198,7 +188,16 @@ class TitleState(arc.View):
             self.flash_alpha = 1.0
             # Start the badass music
             arc.play_sound(self.title_music.sound, loop=True)
+
+        if self.beat >= 16:
+            self.draw_main()
+            self.flash_group.draw()
+            self.flash.alpha -= 128 / 60 if self.flash_alpha > 0 else 0
+        else:
+            self.cool_text_arc.draw() # Draw the intro text because Arcade likes the draw() call here (fk this man)
+        print(self.flash.alpha)
         
+    def on_update(self, delta_time: float):
         self.intro_timer += delta_time
         if self.intro_timer >= self.secs_per_beat:
             self.intro_timer -= self.secs_per_beat
