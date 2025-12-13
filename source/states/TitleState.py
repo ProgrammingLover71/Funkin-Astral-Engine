@@ -7,6 +7,7 @@
 from AssetManager import *
 from PIL import ImageEnhance
 import math
+import random
 
 #========== Drawing utility ==========#
 
@@ -25,7 +26,6 @@ def draw_tex(view: arc.View, texture: arc.Texture, x: float, y: float, angle: fl
 def get_random_intro_line(asset_manager: AssetManager) -> str:
     intro_text_asset = asset_manager.load_text_file("introText", "assets/introText.txt")
     intro_lines = intro_text_asset.content.splitlines()
-    import random
     return random.choice(intro_lines)
 
 
@@ -159,6 +159,7 @@ class TitleState(arc.View):
 
 
     def draw_main(self):
+        # isn't the draw_tex helper lovely? :>
         # Draw the stage
         draw_tex(self, self.stage_images[0].texture, 0, -100)  # Back
         draw_tex(self, self.stage_images[1].texture, 0, -250)  # Curtains
@@ -178,34 +179,31 @@ class TitleState(arc.View):
     def on_draw(self):
         self.clear()
 
-        # On the first render, start playing the title music
+        if self.beat >= 16:
+            self.draw_main()
+            self.flash_group.draw()
+            self.flash.alpha -= 128 / 60 if self.flash_alpha > 0 else 0
+        else:
+            self.cool_text_arc.draw() # Draw the intro text because Arcade likes the draw() call here (fk this man)
+        print(self.flash.alpha)
+        
+    def on_update(self, delta_time: float):
+        # On the first render, start playing the title music and do some other one-time shit
         if not self.rendering:
             self.rendering = True
-            # Reset the text and timer because for some reason the lag at the start stacks the calls up
+            # Reset the text and timer because for some reason the lag at the start stacks the calls up (why the fk is there even lag when it starts)
             self.beat = 0
             self.intro_timer = 0
             self.cool_text_arc.text = ""
             self.flash_alpha = 1.0
             # Start the badass music
             arc.play_sound(self.title_music.sound, loop=True)
-
-        if self.beat >= 16:
-            self.draw_main()
-            self.menu_text.draw()
-            self.flash_group.draw()
-            self.flash.alpha -= 128 / 60 if self.flash_alpha > 0 else 0
-        else:
-            self.cool_text_arc.draw() # Draw the intro text becausi Arcade likes the draw() call here (fk this man)
         
-
-
-    def on_update(self, delta_time: float):
         self.intro_timer += delta_time
         if self.intro_timer >= self.secs_per_beat:
             self.intro_timer -= self.secs_per_beat
             self.beat += 1
             self.beat_hit()
-        self.menu_text.font_size -= (self.menu_text.font_size - 32) * 0.1  # Bring the font size back to normal smoothly
             
 
     # Just a constant to indicate continuing to main drawing

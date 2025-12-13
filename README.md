@@ -1,5 +1,5 @@
 # Friday Night Funkin' — Astral Engine
-**Astral Engine** is a 100% Python recreation of Friday Night Funkin' (currently based on FnF 0.7.5), that aims to add multiple Quality of Life (QoL) features, such as:
+**Astral Engine** is a 100% Python recreation of [Friday Night Funkin'](https://github.com/FunkinCrew/Funkin) that aims to add multiple Quality of Life (QoL) features, such as:
 - *better scoring*,
 - *more in-game stats*,
 - *better menus*, and
@@ -7,9 +7,11 @@
 
 while also introducing cool stuff like revamped menus, editors, easier mod structure, and most importantly... <br>
 *performance*.
+The Astral Engine is currently based off of Friday Night Funkin' version 0.7.5.
 
 # Installing
-Just download the source code for the latest release, extract it from the .zip file, and you're done!
+- Just download the source code for the latest release, extract it from the zip file, and run `FunkinAstral.py`.
+- Another thing you can do is download the executable (`FunkinAstral.exe`) and run it directly.
 
 # Contributions
 **All contributions are welcome!** If you've got a bug report (or even a fix for said bug/bugs), an idea or you found a piece of code that isn't doing its thing, feel free to submit it as an issue, and it will be resolved as quickly as possible.
