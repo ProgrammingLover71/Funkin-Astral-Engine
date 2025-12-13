@@ -1,3 +1,5 @@
+***WARNING: THIS ENGINE IS STILL IN DEVELOPMENT!!!***
+
 # Friday Night Funkin' — Astral Engine
 **Astral Engine** is a 100% Python recreation of [Friday Night Funkin'](https://github.com/FunkinCrew/Funkin) that aims to add multiple Quality of Life (QoL) features, such as:
 - *better scoring*,
