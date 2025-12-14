@@ -75,6 +75,7 @@ class StateManager:
         cls.current_state = new_state
         if not cls.current_state.loaded:
             cls.current_state.setup()
+            cls.current_state.loaded = True   # so we don't set it up again
 
         cls.current_state.enter()
         cls.window.show_view(cls.current_state)
