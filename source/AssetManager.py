@@ -29,7 +29,7 @@ def load_xml_atlas(xml_file: str, image_file: str):
         h = int(sub.attrib["height"])
 
         # Crop the corresponding region
-        frame = atlas_img.crop((x, y, x + w, y + h))
+        frame = atlas_img.crop((x, y, x + w, y + h)).convert("RGBA")
 
         # Convert to arcade texture
         tex = arc.Texture(
@@ -273,18 +273,16 @@ class AssetManager:
         `fonts` (dict[str, FontAsset]): A dictionary mapping font names to their corresponding FontAsset objects.
     
     The AssetManager class is responsible for loading assets on demand and caching them for future use to optimize performance.
-    Not only that, but this class shall only be instantiated once, and used globally across the entire engine.
     """
 
-    def __init__(self):
-        # Make ourselves some little caches because we care about our sweet delicious RAM and performance :D
-        self.images: dict[str, ImageAsset] = {}
-        self.sounds: dict[str, SoundAsset] = {}
-        self.fonts: dict[str, FontAsset] = {}
-        self.text_files: dict[str, TextFileAsset] = {}
+    # Make ourselves some little caches because we care about our sweet delicious RAM and performance :D
+    images: dict[str, ImageAsset]        = {}
+    sounds: dict[str, SoundAsset]        = {}
+    fonts: dict[str, FontAsset]          = {}
+    text_files: dict[str, TextFileAsset] = {}
 
-
-    def load_image(self, name: str, image_path: str):
+    @classmethod
+    def load_image(cls, name: str, image_path: str):
         """
         Loads an image asset and stores it in the asset manager.
 
@@ -297,12 +295,13 @@ class AssetManager:
         """
         # Load the image using the ImageAsset class bcz that's why we added load functions (duhhh)
         # Oh, and only load it if it hasn't been loaded before
-        if self.images.get(name) == None:
-            self.images[name] = ImageAsset.load(image_path)
-        return self.images[name]
+        if cls.images.get(name) == None:
+            cls.images[name] = ImageAsset.load(image_path)
+        return cls.images[name]
 
-
-    def load_sound(self, name: str, sound_path: str):
+    
+    @classmethod
+    def load_sound(cls, name: str, sound_path: str):
         """
         Loads a sound asset and stores it in the asset manager.
 
@@ -311,12 +310,13 @@ class AssetManager:
             `sound_path` (str): The file path to the sound.
         """
         # Do the same for sounds...
-        if self.sounds.get(name) == None:
-            self.sounds[name] = SoundAsset.load(sound_path)
-        return self.sounds[name]
+        if cls.sounds.get(name) == None:
+            cls.sounds[name] = SoundAsset.load(sound_path)
+        return cls.sounds[name]
 
 
-    def load_font(self, name: str, font_path: str):
+    @classmethod
+    def load_font(cls, name: str, font_path: str):
         """
         Loads a font asset and stores it in the asset manager.
 
@@ -325,11 +325,13 @@ class AssetManager:
             `font_path` (str): The file path to the font.
         """
         # ...And for fonts too ;)
-        if self.fonts.get(name) == None:
-            self.fonts[name] = FontAsset.load(font_path)
-        return self.fonts[name]
+        if cls.fonts.get(name) == None:
+            cls.fonts[name] = FontAsset.load(font_path)
+        return cls.fonts[name]
     
-    def load_text_file(self, name: str, file_path: str):
+
+    @classmethod
+    def load_text_file(cls, name: str, file_path: str):
         """
         Loads a text file asset and stores it in the asset manager.
 
@@ -340,6 +342,6 @@ class AssetManager:
             `TextFileAsset`: The loaded text file asset.
         """
         # And for text files as well
-        if self.text_files.get(name) == None:
-            self.text_files[name] = TextFileAsset.load(file_path)
-        return self.text_files[name]
+        if cls.text_files.get(name) == None:
+            cls.text_files[name] = TextFileAsset.load(file_path)
+        return cls.text_files[name]

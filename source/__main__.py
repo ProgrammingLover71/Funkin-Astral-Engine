@@ -5,17 +5,24 @@
 
 import arcade as arc
 from states.TitleState import TitleState
+from states.MainMenuState import MainMenuState
 from AssetManager import *
+from StateManager import *
+
 
 class Astral(arc.Window):
     def __init__(self):
         super().__init__(1280, 720, "Friday Night Funkin' - Astral Engine v0.1 (Alpha Build)")
-        self.asset_manager = AssetManager()
-        self.title_state = TitleState(self.asset_manager, self)
-        self.show_view(self.title_state)
-    
-    def setup_view(self):
-        self.current_view.setup()
+        # Set up the state manager
+        StateManager.init(self)
+        # Set up the game states
+        self.title_state    = TitleState(self)
+        self.mainMenu_state = MainMenuState(self)
+
+        StateManager.register_state("title", self.title_state)
+        StateManager.register_state("mainMenu", self.mainMenu_state)
+        # Show the title state
+        StateManager.show_state("title")
 
     def on_draw(self):
         self.current_view.on_draw()
@@ -27,7 +34,9 @@ class Astral(arc.Window):
 if __name__ == "__main__":
     print("Friday Night Funkin' - Astral Engine [Alpha Build]")
     print("hold up let it cook ;)")
+
     app = Astral()
-    app.setup_view()
+
     print("ladies 'n' gentlemen its time for some funkin' :P")
+
     arc.run()

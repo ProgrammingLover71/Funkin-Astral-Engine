@@ -2,60 +2,49 @@
 
 ### Title State Module
 # This module defines the TitleState class, which represents the title screen of the game.
-# It appears first when the game is launched, unless specified in the debug launch settings.
+# It appears first when the game is launched.
 
 from AssetManager import *
-from PIL import ImageEnhance
+from StateManager import *
+from utils import draw_tex
 import math
 import random
 
-#========== Drawing utility ==========#
-
-def draw_tex(view: arc.View, texture: arc.Texture, x: float, y: float, angle: float = 0):
-    arc.draw_texture_rect(
-        texture, rect = arc.Rect.from_kwargs(
-            x      = view.width / 2  + x,
-            y      = view.height / 2 + y,
-            width  = texture.width,
-            height = texture.height
-        ),  angle = angle
-    )
-
 
 #========== Intro text utility ==========#
-def get_random_intro_line(asset_manager: AssetManager) -> str:
-    intro_text_asset = asset_manager.load_text_file("introText", "assets/introText.txt")
+def get_random_intro_line() -> str:
+    intro_text_asset = AssetManager.load_text_file("introText", "assets/introText.txt")
     intro_lines = intro_text_asset.content.splitlines()
     return random.choice(intro_lines)
 
 
-class TitleState(arc.View):
-    def __init__(self, asset_manager: AssetManager, window: arc.Window):
-        super().__init__(window, background_color=arc.color.BLACK)
-        self.asset_manager = asset_manager
+class TitleState(State):
+    def __init__(self, window: arc.Window):
+        super().__init__(window, background_color = arc.color.BLACK)
         self.gf_animation_frame = 0
         self.logo_animation_frame = 0
         self.logo_animation_factor = 12 / 60    # 12 FPS animation but scaled to the beat (maybe?), at 60 FPS update rate (just as in V-Slice FNF)
         self.gf_animation_factor =   24 / 60    # 24 FPS animation but scaled to the beat (maybe?), at 60 FPS update rate (just as in V-Slice FNF)
         
-        self.intro_line0, self.intro_line1 = get_random_intro_line(self.asset_manager).split('--')
-
+        self.intro_line0, self.intro_line1 = get_random_intro_line().split('--')
         self.rendering = False   # Flag to check if the scene started rendering
         
 
     def setup(self):
+        super().setup()
+
         self.flash_group = arc.SpriteList()
         self.ngl_group   = arc.SpriteList()
 
         # Load title screen assets
-        self.title_music = self.asset_manager.load_sound("titleScreen/music", "assets/sounds/TitleMenu/freakyMenu.ogg")
+        self.title_music = AssetManager.load_sound("titleScreen/music", "assets/sounds/TitleMenu/freakyMenu.ogg")
 
-        self.title_image  = self.asset_manager.load_image("titleScreen/title", "assets/images/TitleMenu/logoBumpin.png")   # Title Logo
-        self.gf_image     = self.asset_manager.load_image("titleScreen/gf",    "assets/images/TitleMenu/gfDanceTitle.png")  # Girlfriend on Speakers Image
+        self.title_image  = AssetManager.load_image("titleScreen/title", "assets/images/TitleMenu/logoBumpin.png")   # Title Logo
+        self.gf_image     = AssetManager.load_image("titleScreen/gf",    "assets/images/TitleMenu/gfDanceTitle.png")  # Girlfriend on Speakers Image
         self.stage_images = [
-            self.asset_manager.load_image(f"titleScreen/stage-back",     f"assets/images/shared/stageback.png").apply_brightness(0.4),
-            self.asset_manager.load_image(f"titleScreen/stage-curtains", f"assets/images/shared/stagecurtains.png").apply_brightness(0.4),
-            self.asset_manager.load_image(f"titleScreen/stage-front",    f"assets/images/shared/stagefront.png").apply_brightness(0.4),
+            AssetManager.load_image(f"titleScreen/stage-back",     f"assets/images/shared/stageback.png").apply_brightness(0.4),
+            AssetManager.load_image(f"titleScreen/stage-curtains", f"assets/images/shared/stagecurtains.png").apply_brightness(0.4),
+            AssetManager.load_image(f"titleScreen/stage-front",    f"assets/images/shared/stagefront.png").apply_brightness(0.4),
         ]
 
         # Scale the assets so they're not too big
@@ -69,7 +58,7 @@ class TitleState(arc.View):
         self.secs_per_beat = 60 / self.song_bpm
         self.cool_text = ""     # Currently displayed intro text
         # Load the VCR font and then make the Text object
-        self.vcr_font = self.asset_manager.load_font("VCR", "assets/fonts/vcr.ttf")
+        self.vcr_font = AssetManager.load_font("VCR", "assets/fonts/vcr.ttf")
         self.cool_text_arc = arc.Text(
             text = "",
             x = 0,
@@ -82,7 +71,7 @@ class TitleState(arc.View):
             font_name="VCR OSD Mono"   # what a goofy ahh name
         )
 
-        ng_logo_img = self.asset_manager.load_image("titleScreen/ng-logo", "assets/images/TitleMenu/newgrounds_logo.png").apply_scale(0.75)
+        ng_logo_img = AssetManager.load_image("titleScreen/ng-logo", "assets/images/TitleMenu/newgrounds_logo.png").apply_scale(0.75)
         self.ng_logo = arc.Sprite(
             ng_logo_img.texture, 
             center_x = self.width / 2 - 40,
@@ -94,7 +83,7 @@ class TitleState(arc.View):
 
         # Values for the flashbang
         self.flash_alpha = 255.0
-        self.flash_img = self.asset_manager.load_image("titleScreen/flashbang", "assets/images/shared/flashbang.png")
+        self.flash_img = AssetManager.load_image("titleScreen/flashbang", "assets/images/shared/flashbang.png")
         self.flash = arc.Sprite(self.flash_img.texture, center_x=self.width / 2, center_y=self.height / 2)          # Center the sprite (i'm an idiot and forgot to set the center)
         self.flash_group.append(self.flash)
 
@@ -206,6 +195,7 @@ class TitleState(arc.View):
             self.flash_alpha = 1.0
             # Start the badass music
             arc.play_sound(self.title_music.sound, loop=True)
+            return
 
         if self.beat >= 16:
             self.draw_main()
@@ -233,4 +223,4 @@ class TitleState(arc.View):
 
         # Go to the next menu (the main menu) -- too bad it's not implemented yet XD
         if key == arc.key.ENTER:
-            arc.exit()
+            StateManager.show_state("mainMenu")
