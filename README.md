@@ -12,8 +12,7 @@ while also introducing cool stuff like revamped menus, editors, easier mod struc
 The Astral Engine is currently based off of Friday Night Funkin' version 0.7.5.
 
 # Installing
-- Just download the source code for the latest release, extract it from the zip file, and run `FunkinAstral.py`.
-- Another thing you can do is download the executable (`FunkinAstral.exe`) and run it directly.
+- Currently, the only way to run the "game" is to download the source and run `Astral.py`.
 
 # Contributions
 **All contributions are welcome!** If you've got a bug report (or even a fix for said bug/bugs), an idea or you found a piece of code that isn't doing its thing, feel free to submit it as an issue, and it will be resolved as quickly as possible.
