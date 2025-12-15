@@ -1,7 +1,7 @@
 # Friday Night Funkin' Astral Engine
 
 ### Main Module
-# This is the main entry point for the Astral Engine application.
+# This is the main entry point for Astral.
 
 import arcade as arc
 from states.TitleState import TitleState
