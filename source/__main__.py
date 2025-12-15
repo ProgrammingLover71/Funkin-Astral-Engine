@@ -12,7 +12,7 @@ from StateManager import *
 
 class Astral(arc.Window):
     def __init__(self):
-        super().__init__(1280, 720, "Friday Night Funkin' - Astral Engine v0.1 (Alpha Build)")
+        super().__init__(1280, 720, "Friday Night Funkin' - Astral Engine v0.1 (Development Build)")
         # Set up the state manager
         StateManager.init(self)
         # Set up the game states
@@ -32,7 +32,7 @@ class Astral(arc.Window):
 
 
 if __name__ == "__main__":
-    print("Friday Night Funkin' - Astral Engine 0.1")
+    print("Friday Night Funkin' - Astral Engine 0.1 (Development Build)")
     print("Stirring some shit...")
 
     app = Astral()
