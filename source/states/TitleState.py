@@ -7,6 +7,7 @@
 from AssetManager import *
 from StateManager import *
 from utils import draw_tex
+from Keybinds import *
 import math
 import random
 
@@ -21,24 +22,25 @@ def get_random_intro_line() -> str:
 class TitleState(State):
     def __init__(self, window: arc.Window):
         super().__init__(window, background_color = arc.color.BLACK)
-        self.gf_animation_frame = 0
+        self.gf_animation_frame   = 0
         self.logo_animation_frame = 0
+
         self.logo_animation_factor = 12 / 60    # 12 FPS animation but scaled to the beat (maybe?), at 60 FPS update rate (just as in V-Slice FNF)
-        self.gf_animation_factor =   24 / 60    # 24 FPS animation but scaled to the beat (maybe?), at 60 FPS update rate (just as in V-Slice FNF)
+        self.gf_animation_factor   = 24 / 60    # 24 FPS animation but scaled to the beat (maybe?), at 60 FPS update rate (just as in V-Slice FNF)
         
-        self.intro_line0, self.intro_line1 = get_random_intro_line().split('--')
-        self.rendering = False   # Flag to check if the scene started rendering
-        
+        self.rendering = False
+        self.intro_skipped = False
+
 
     def setup(self):
         super().setup()
+        self.intro_line0, self.intro_line1 = get_random_intro_line().split('--')
 
         self.flash_group = arc.SpriteList()
         self.ngl_group   = arc.SpriteList()
 
         # Load title screen assets
         self.title_music = AssetManager.load_sound("titleScreen/music", "assets/sounds/TitleMenu/freakyMenu.ogg")
-
         self.title_image  = AssetManager.load_image("titleScreen/title", "assets/images/TitleMenu/logoBumpin.png")   # Title Logo
         self.gf_image     = AssetManager.load_image("titleScreen/gf",    "assets/images/TitleMenu/gfDanceTitle.png")  # Girlfriend on Speakers Image
         self.stage_images = [
@@ -216,11 +218,14 @@ class TitleState(State):
             self.beat_hit()
         
     
-    def on_key_press(self, key, mods):
+    def key_press(self, key, mods):
         # Exit the game if we press escape
-        if key == arc.key.ESCAPE:
+        if Keybinds.checkKeybind(key, Keybinds.Return):
             arc.exit()
 
         # Go to the next menu (the main menu) -- too bad it's not implemented yet XD
-        if key == arc.key.ENTER:
-            StateManager.show_state("mainMenu")
+        if Keybinds.checkKeybind(key, Keybinds.Accept):
+            if self.intro_skipped: StateManager.show_state("mainMenu")
+            else:
+                self.intro_skipped = True
+                self.beat = 16

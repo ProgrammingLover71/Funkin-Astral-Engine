@@ -28,15 +28,14 @@ class Astral(arc.Window):
         self.current_view.on_draw()
     
     def on_key_press(self, symbol, modifiers):
-        return self.current_view.on_key_press(symbol, modifiers)
+        return self.current_view.key_press(symbol, modifiers)
 
 
 if __name__ == "__main__":
-    print("Friday Night Funkin' - Astral Engine [Alpha Build]")
-    print("hold up let it cook ;)")
+    print("Friday Night Funkin' - Astral Engine 0.1")
+    print("Stirring some shit...")
 
     app = Astral()
-
-    print("ladies 'n' gentlemen its time for some funkin' :P")
+    print("Ladies n gentlemen, it is time for some funkin'!")
 
     arc.run()
