@@ -270,7 +270,8 @@ class AssetManager:
     Attributes:
         `images` (dict[str, ImageAsset]): A dictionary mapping image names to their corresponding ImageAsset objects.
         `sounds` (dict[str, SoundAsset]): A dictionary mapping sound names to their corresponding SoundAsset objects.
-        `fonts` (dict[str, FontAsset]): A dictionary mapping font names to their corresponding FontAsset objects.
+        `fonts` (dict[str, FontAsset]):   A dictionary mapping font names to their corresponding FontAsset objects.
+        `text_files` (dict[str, TextFileAsset]): A dictionary mapping text file names to their corresponding TextFileAsset objects.
     
     The AssetManager class is responsible for loading assets on demand and caching them for future use to optimize performance.
     """
