@@ -46,6 +46,7 @@ class MainMenuState(State):
         self.clear()
         # Draw everything
         draw_tex(self, self.menu_bg.texture, 0, 0)
+        self.camera.use()    # render shit (hopefully)
         self.btn_sprites.draw()
     
 
@@ -56,11 +57,6 @@ class MainMenuState(State):
 
         # Move the camera (in 0.125s) -- I fucking hate immutable vectors bruh
         self.camera.position += arc.Vec2(0, cam_delta)
-
-        # update the god damn sprites
-        self.storymode_spr.center_y -= cam_delta
-        self.freeplay_spr.center_y  -= cam_delta
-        self.options_spr.center_y   -= cam_delta
 
         self.storymode_spr.texture = self.storymode_img.texture[math.floor(self.btn_texture_index) % 3]
         self.freeplay_spr.texture  = self.freeplay_img.texture[math.floor(self.btn_texture_index) % 3]
