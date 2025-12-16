@@ -51,7 +51,6 @@ class MainMenuState(State):
 
     def on_update(self, dt):
         self.btn_texture_index += 1 / 20
-        self.btn_texture_index %= 4   # We have only 3 sprites for the idle animation
 
         cam_delta = (self.target_cam_y - self.camera.position.y) * 8 * dt
 
@@ -63,9 +62,9 @@ class MainMenuState(State):
         self.freeplay_spr.center_y  -= cam_delta
         self.options_spr.center_y   -= cam_delta
 
-        self.storymode_spr.texture = self.storymode_img.texture[math.floor(self.btn_texture_index)]
-        self.freeplay_spr.texture  = self.freeplay_img.texture[math.floor(self.btn_texture_index)]
-        self.options_spr.texture   = self.options_img.texture[math.floor(self.btn_texture_index)]
+        self.storymode_spr.texture = self.storymode_img.texture[math.floor(self.btn_texture_index) % 3]
+        self.freeplay_spr.texture  = self.freeplay_img.texture[math.floor(self.btn_texture_index) % 3]
+        self.options_spr.texture   = self.options_img.texture[math.floor(self.btn_texture_index) % 3]
     
 
     def key_press(self, key, mods):
