@@ -6,14 +6,15 @@
 
 from AssetManager import *
 from StateManager import *
-from utils import draw_tex
-from Keybinds import *
+from Input import *
+from utils import *
 import math
 
 
 class MainMenuState(State):
-    def __init__(self, window: arc.Window):
+    def __init__(self, window: arc.Window, inp_mgr: InputManager):
         super().__init__(window, background_color = arc.color.BLACK)
+        self.input_manager = inp_mgr
 
     def setup(self):
         super().setup()
@@ -26,15 +27,13 @@ class MainMenuState(State):
         self.btn_texture_index = 0
         self.option_index      = 0
         
-        # Camera stuff
-        self.camera = arc.Camera2D()
-        self.camera.position = arc.Vec2(0, 0)
+        # Camera movement stuff
         self.target_cam_y = 0
 
         # The actual buttons lol
-        self.storymode_spr = arc.Sprite(self.storymode_img.texture[self.btn_texture_index], center_x = self.width / 2, center_y = self.height / 2 + 200)
-        self.freeplay_spr  = arc.Sprite(self.freeplay_img.texture[self.btn_texture_index],  center_x = self.width / 2, center_y = self.height / 2 + 0)
-        self.options_spr   = arc.Sprite(self.options_img.texture[self.btn_texture_index],   center_x = self.width / 2, center_y = self.height / 2 - 200)
+        self.storymode_spr = arc.Sprite(self.storymode_img.texture[self.btn_texture_index], center_x = 0, center_y = 200)
+        self.freeplay_spr  = arc.Sprite(self.freeplay_img.texture[self.btn_texture_index],  center_x = 0, center_y = 0)
+        self.options_spr   = arc.Sprite(self.options_img.texture[self.btn_texture_index],   center_x = 0, center_y = -200)
 
         self.btn_sprites = arc.SpriteList()
         self.btn_sprites.append(self.storymode_spr)
@@ -44,37 +43,39 @@ class MainMenuState(State):
 
     def on_draw(self):
         self.clear()
+        self._world_camera.use()
+
         # Draw everything
-        draw_tex(self, self.menu_bg.texture, 0, 0)
-        self.camera.use()    # render shit (hopefully)
+        draw_tex(self, self.menu_bg.texture, 
+                 self._world_camera.position.x,
+                 self._world_camera.position.y)
         self.btn_sprites.draw()
     
 
     def on_update(self, dt):
         self.btn_texture_index += 1 / 20
 
-        cam_delta = (self.target_cam_y - self.camera.position.y) * 8 * dt
+        cam_delta = (self.target_cam_y - self._world_camera.position.y) * 8 * dt
 
         # Move the camera (in 0.125s) -- I fucking hate immutable vectors bruh
-        self.camera.position += arc.Vec2(0, cam_delta)
+        self._world_camera.position += arc.Vec2(0, cam_delta)
 
         self.storymode_spr.texture = self.storymode_img.texture[math.floor(self.btn_texture_index) % 3]
         self.freeplay_spr.texture  = self.freeplay_img.texture[math.floor(self.btn_texture_index) % 3]
         self.options_spr.texture   = self.options_img.texture[math.floor(self.btn_texture_index) % 3]
     
-
-    def key_press(self, key, mods):
-        if Keybinds.checkKeybind(key, Keybinds.Return):
-            StateManager.show_state("title")
-        
-        if Keybinds.checkKeybind(key, Keybinds.Up):
-            # Update the option only if we have what to set it to
-            if self.option_index < 1:
-                self.target_cam_y += 200
-                self.option_index += 1
-
-        if Keybinds.checkKeybind(key, Keybinds.Down):
-            # Do the same here
-            if self.option_index > -1:
-                self.target_cam_y -= 200
-                self.option_index -= 1
+        for event in self.input_manager.poll():
+            if event.act_type == InputEvent.Pressed and event.action == Keybind.Return:
+                StateManager.show_state("title")
+            
+            if event.act_type == InputEvent.Pressed and event.action == Keybind.Up:
+                # Update the option only if we have what to set it to
+                if self.option_index < 1:
+                    self.target_cam_y += 200
+                    self.option_index += 1
+            
+            if event.act_type == InputEvent.Pressed and event.action == Keybind.Down:
+                # Do the same here
+                if self.option_index > -1:
+                    self.target_cam_y -= 200
+                    self.option_index -= 1

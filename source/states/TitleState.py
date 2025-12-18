@@ -6,8 +6,8 @@
 
 from AssetManager import *
 from StateManager import *
-from utils import draw_tex
-from Keybinds import *
+from Input import *
+from utils import *
 import math
 import random
 
@@ -20,7 +20,7 @@ def get_random_intro_line() -> str:
 
 
 class TitleState(State):
-    def __init__(self, window: arc.Window):
+    def __init__(self, window: arc.Window, inp_mgr: InputManager):
         super().__init__(window, background_color = arc.color.BLACK)
         self.gf_animation_frame   = 0
         self.logo_animation_frame = 0
@@ -31,10 +31,14 @@ class TitleState(State):
         self.rendering = False
         self.intro_skipped = False
 
+        self.input_manager = inp_mgr
+
 
     def setup(self):
         super().setup()
         self.intro_line0, self.intro_line1 = get_random_intro_line().split('--')
+        self.next_state_timer = 0
+        self.accepted = False
 
         self.flash_group = arc.SpriteList()
         self.ngl_group   = arc.SpriteList()
@@ -63,8 +67,8 @@ class TitleState(State):
         self.vcr_font = AssetManager.load_font("VCR", "assets/fonts/vcr.ttf")
         self.cool_text_arc = arc.Text(
             text = "",
-            x = 0,
-            y = self.height / 2 + 60,
+            x = -self.width / 2,
+            y = 60,
             color = arc.color.WHITE,
             font_size = 28,
             align = "center",
@@ -76,8 +80,8 @@ class TitleState(State):
         ng_logo_img = AssetManager.load_image("titleScreen/ng-logo", "assets/images/TitleMenu/newgrounds_logo.png").apply_scale(0.75)
         self.ng_logo = arc.Sprite(
             ng_logo_img.texture, 
-            center_x = self.width / 2 - 40,
-            center_y = 160,
+            center_x = 0,
+            center_y = -200,
             angle = 0,
             visible = False
         )
@@ -86,14 +90,14 @@ class TitleState(State):
         # Values for the flashbang
         self.flash_alpha = 255.0
         self.flash_img = AssetManager.load_image("titleScreen/flashbang", "assets/images/shared/flashbang.png")
-        self.flash = arc.Sprite(self.flash_img.texture, center_x=self.width / 2, center_y=self.height / 2)          # Center the sprite (i'm an idiot and forgot to set the center)
+        self.flash = arc.Sprite(self.flash_img.texture, center_x = 0, center_y = 0)
         self.flash_group.append(self.flash)
 
         # Menu text
         self.menu_text = arc.Text(
-            text = "Press [Enter] to Start",
-            x = self.width / 2,
-            y = 30,
+            text = f"Press [{Keybind.bindings['Accept']}] to Start",
+            x = 0,
+            y = -330,
             color = arc.color.WHITE,
             font_size = 32,
             anchor_x = "center",
@@ -159,6 +163,7 @@ class TitleState(State):
             addText("thx for playing astral guyz :}")
         elif self.beat >= 16:
             self.menu_text.font_size = 34   # Enlarge the menu text a bit (just a little bit)
+            self.intro_skipped = True
         
         self.cool_text_arc.text = self.cool_text
         
@@ -187,6 +192,7 @@ class TitleState(State):
 
     def on_draw(self):
         self.clear()
+        self._world_camera.use()
         # On the first render, start playing the title music and do some other one-time shit
         if not self.rendering:
             self.rendering = True
@@ -209,23 +215,30 @@ class TitleState(State):
         self.ngl_group.draw()
         
 
-    def on_update(self, delta_time: float):
-        self.intro_timer += delta_time
-        self.menu_text.font_size -= (self.menu_text.font_size - 32) / 60
+    def on_update(self, dt: float):
+        self.intro_timer += dt
+
+        self.next_state_timer += dt
+        if self.next_state_timer > 2.0 and self.accepted and self.intro_skipped: 
+            StateManager.show_state("mainMenu")
+
+        if not self.accepted:   self.menu_text.font_size -= (self.menu_text.font_size - 32) * dt
+        else:                   self.menu_text.font_size -= (self.menu_text.font_size - 40) * dt
+
+
         if self.intro_timer >= self.secs_per_beat:
             self.intro_timer -= self.secs_per_beat
             self.beat += 1
             self.beat_hit()
         
-    
-    def key_press(self, key, mods):
-        # Exit the game if we press escape
-        if Keybinds.checkKeybind(key, Keybinds.Return):
-            arc.exit()
-
-        # Go to the next menu (the main menu) -- too bad it's not implemented yet XD
-        if Keybinds.checkKeybind(key, Keybinds.Accept):
-            if self.intro_skipped: StateManager.show_state("mainMenu")
-            else:
-                self.intro_skipped = True
-                self.beat = 16
+        for event in self.input_manager.poll():
+            if event.act_type == InputEvent.Pressed and event.action == Keybind.Return:
+                arc.exit()
+            
+            if event.act_type == InputEvent.Pressed and event.action == Keybind.Accept:
+                if self.intro_skipped:
+                    self.next_state_timer += 1
+                    self.accepted = True
+                else:
+                    self.intro_skipped = True
+                    self.beat = 16

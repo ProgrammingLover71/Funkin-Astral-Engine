@@ -18,11 +18,13 @@ class State(arc.View):
 
     def enter(self):
         """Used when the state starts to get rendered."""
-        pass
+        self._world_camera = arc.Camera2D(position = (0, 0))
+        self._world_camera.activate()
 
     def exit(self):
         """Used when the state stops being rendered."""
-        pass
+        # Let the GC do its magic :)
+        self._world_camera = None
 
     def setup(self):
         """Used when the state loads for the first time."""
