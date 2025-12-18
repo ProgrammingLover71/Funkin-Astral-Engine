@@ -283,7 +283,7 @@ class AssetManager:
     text_files: dict[str, TextFileAsset] = {}
 
     @classmethod
-    def load_image(cls, name: str, image_path: str):
+    def load_image(cls, name: str, image_path: str = None):
         """
         Loads an image asset and stores it in the asset manager.
 
@@ -302,7 +302,7 @@ class AssetManager:
 
     
     @classmethod
-    def load_sound(cls, name: str, sound_path: str):
+    def load_sound(cls, name: str, sound_path: str = None):
         """
         Loads a sound asset and stores it in the asset manager.
 
@@ -317,7 +317,7 @@ class AssetManager:
 
 
     @classmethod
-    def load_font(cls, name: str, font_path: str):
+    def load_font(cls, name: str, font_path: str = None):
         """
         Loads a font asset and stores it in the asset manager.
 
@@ -332,7 +332,7 @@ class AssetManager:
     
 
     @classmethod
-    def load_text_file(cls, name: str, file_path: str):
+    def load_text_file(cls, name: str, file_path: str = None):
         """
         Loads a text file asset and stores it in the asset manager.
 
@@ -346,3 +346,10 @@ class AssetManager:
         if cls.text_files.get(name) == None:
             cls.text_files[name] = TextFileAsset.load(file_path)
         return cls.text_files[name]
+
+    @staticmethod
+    def load_shared_sounds():
+        """
+        Loads all shared sounds for the game, including action confirm, return sounds, etc.
+        """
+        AssetManager.load_sound("shared/menuConfirm", "assets/sounds/shared/confirmMenu.ogg")

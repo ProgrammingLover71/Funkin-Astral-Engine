@@ -36,15 +36,23 @@ class TitleState(State):
 
     def setup(self):
         super().setup()
+
+        self.song_bpm = 102
+        self.secs_per_beat = 60 / self.song_bpm
+
         self.intro_line0, self.intro_line1 = get_random_intro_line().split('--')
-        self.next_state_timer = 0
-        self.accepted = False
+        
+        # Stuff for the intro text animation
+        self.accepted: bool   = False
+        self.confirm_timer    = 0.0
+        self.CONFIRM_DURATION = 4 * self.secs_per_beat      # = 4 beats in seconds
+        self.confirm_text_frm = 0                           # We use this to determine the color of the main menu text
 
         self.flash_group = arc.SpriteList()
         self.ngl_group   = arc.SpriteList()
 
         # Load title screen assets
-        self.title_music = AssetManager.load_sound("titleScreen/music", "assets/sounds/TitleMenu/freakyMenu.ogg")
+        self.title_music  = AssetManager.load_sound("titleScreen/music", "assets/sounds/TitleMenu/freakyMenu.ogg")
         self.title_image  = AssetManager.load_image("titleScreen/title", "assets/images/TitleMenu/logoBumpin.png")   # Title Logo
         self.gf_image     = AssetManager.load_image("titleScreen/gf",    "assets/images/TitleMenu/gfDanceTitle.png")  # Girlfriend on Speakers Image
         self.stage_images = [
@@ -59,10 +67,9 @@ class TitleState(State):
         
         # Intro shit (way too much WHY GOD WHY)
         self.intro_timer = 0
-        self.beat = -1
-        self.song_bpm = 102
-        self.secs_per_beat = 60 / self.song_bpm
+        self.beat = -1          # Set the beat to -1 to avoid showing the "The" intro text twice
         self.cool_text = ""     # Currently displayed intro text
+
         # Load the VCR font and then make the Text object
         self.vcr_font = AssetManager.load_font("VCR", "assets/fonts/vcr.ttf")
         self.cool_text_arc = arc.Text(
@@ -77,25 +84,30 @@ class TitleState(State):
             font_name="VCR OSD Mono"   # what a goofy ahh name
         )
 
+
         ng_logo_img = AssetManager.load_image("titleScreen/ng-logo", "assets/images/TitleMenu/newgrounds_logo.png").apply_scale(0.75)
         self.ng_logo = arc.Sprite(
             ng_logo_img.texture, 
-            center_x = 0,
+            center_x = -40,     # Offset it a little to the left
             center_y = -200,
             angle = 0,
             visible = False
         )
         self.ngl_group.append(self.ng_logo)
 
+
         # Values for the flashbang
         self.flash_alpha = 255.0
+
         self.flash_img = AssetManager.load_image("titleScreen/flashbang", "assets/images/shared/flashbang.png")
         self.flash = arc.Sprite(self.flash_img.texture, center_x = 0, center_y = 0)
+
         self.flash_group.append(self.flash)
+
 
         # Menu text
         self.menu_text = arc.Text(
-            text = f"Press [{Keybind.bindings['Accept']}] to Start",
+            text = f"Press [{Keybind.get_string_repr_for_bind('Accept')}] to Start",
             x = 0,
             y = -330,
             color = arc.color.WHITE,
@@ -103,6 +115,17 @@ class TitleState(State):
             anchor_x = "center",
             font_name = "VCR OSD Mono"
         )
+
+    
+    def enter(self):
+        super().enter()
+        self.menu_text.font_size = 34
+        self._world_camera.zoom = 1
+
+    
+    def exit(self):
+        self.accepted = False
+        super().exit()
         
 
     
@@ -162,7 +185,6 @@ class TitleState(State):
             addText("")
             addText("thx for playing astral guyz :}")
         elif self.beat >= 16:
-            self.menu_text.font_size = 34   # Enlarge the menu text a bit (just a little bit)
             self.intro_skipped = True
         
         self.cool_text_arc.text = self.cool_text
@@ -193,6 +215,7 @@ class TitleState(State):
     def on_draw(self):
         self.clear()
         self._world_camera.use()
+
         # On the first render, start playing the title music and do some other one-time shit
         if not self.rendering:
             self.rendering = True
@@ -217,28 +240,49 @@ class TitleState(State):
 
     def on_update(self, dt: float):
         self.intro_timer += dt
+        self.confirm_text_frm += 1
+        
+        # Confirm animation stuff
+        if self.accepted:
+            # Flash the menu text yellow
+            if self.confirm_text_frm % 12 > 5:
+                self.menu_text.color = arc.color.YELLOW
+            else:
+                self.menu_text.color = arc.color.WHITE
 
-        self.next_state_timer += dt
-        if self.next_state_timer > 2.0 and self.accepted and self.intro_skipped: 
-            StateManager.show_state("mainMenu")
+            # Set the text size
+            self.confirm_timer += dt
+            t = min(self.confirm_timer / self.CONFIRM_DURATION, 1.0)
+            
+            self.menu_text.font_size = linearLerp(34, 40, easeOut(t))
+            self._world_camera.zoom  = linearLerp(1.0, 0.9, easeOut(t))
+            if self.confirm_timer >= self.CONFIRM_DURATION:
+                StateManager.show_state("mainMenu")
+        else:
+            self.menu_text.font_size -= (self.menu_text.font_size - 34) * dt
 
-        if not self.accepted:   self.menu_text.font_size -= (self.menu_text.font_size - 32) * dt
-        else:                   self.menu_text.font_size -= (self.menu_text.font_size - 40) * dt
-
-
-        if self.intro_timer >= self.secs_per_beat:
-            self.intro_timer -= self.secs_per_beat
+        # Beat stuff
+        if self.intro_timer > self.secs_per_beat:
             self.beat += 1
+            self.intro_timer = 0
             self.beat_hit()
         
+        # Input polling
         for event in self.input_manager.poll():
             if event.act_type == InputEvent.Pressed and event.action == Keybind.Return:
                 arc.exit()
             
             if event.act_type == InputEvent.Pressed and event.action == Keybind.Accept:
-                if self.intro_skipped:
-                    self.next_state_timer += 1
-                    self.accepted = True
-                else:
+                if not self.intro_skipped:
                     self.intro_skipped = True
                     self.beat = 16
+                elif not self.accepted:
+                    self.playConfirm()
+                    self.accepted = True
+                    self.confirm_timer = 0.0
+    
+    def playConfirm(self):
+        if self.accepted:
+            return
+        confirm_sound = AssetManager.load_sound("shared/menuConfirm", "assets/sounds/shared/confirmMenu.ogg")
+        arc.play_sound(confirm_sound.sound)

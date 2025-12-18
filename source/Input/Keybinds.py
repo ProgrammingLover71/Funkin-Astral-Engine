@@ -28,3 +28,9 @@ class Keybind:
         for keybind in Keybind.bindings.get(bind, []):
             if key == keybind: return True
         return False
+    
+    @staticmethod
+    def get_string_repr_for_bind(bind: str):
+        # This sucks, but I was a little lazy :/
+        # It joins all the keybind names using Pyglet's `symbol_string` function. Thx pyglet <3
+        return " / ".join(arc.pyglet.window.key.symbol_string(key) for key in Keybind.bindings.get(bind, []))
