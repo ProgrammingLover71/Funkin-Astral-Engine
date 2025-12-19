@@ -49,9 +49,6 @@ class TitleState(State):
 	def setup(self):
 		super().setup()
 
-		self.song_bpm = 102
-		self.secs_per_beat = 60 / self.song_bpm
-
 		self.intro_line0, self.intro_line1 = get_random_intro_line().split('--')
 		
 		# Stuff for the intro text animation
