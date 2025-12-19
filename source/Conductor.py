@@ -39,7 +39,7 @@ class Conductor:
 
 
 	@classmethod
-	def play_audio(cls, audio: SoundAsset, bpm_override: float | None = None):
+	def load_audio(cls, audio: SoundAsset, bpm_override: float | None = None):
 		cls.song_position = 0.0
 		cls.bpm_data = cls.getStartingBPM(audio)
 		if bpm_override == None:
@@ -47,10 +47,15 @@ class Conductor:
 		else:
 			target_bpm = bpm_override
 		cls.computeMeasureTimes(audio, target_bpm)
-		# Play the sound and load the step/beat/measure times
+		# Load the step/beat/measure times
 		cls.measure_length_ms 	= cls.bpm_cache[audio.sound_path].measure_length_ms
 		cls.beat_length_ms 		= cls.bpm_cache[audio.sound_path].beat_length_ms
 		cls.step_length_ms 		= cls.bpm_cache[audio.sound_path].step_length_ms
+	
+	@classmethod
+	def play_audio(cls, audio: SoundAsset, bpm_override: float | None = None):
+		# Load the step/beat/measure times and play the audio
+		cls.load_audio(audio, bpm_override = bpm_override)
 		arc.sound.play_sound(audio.sound)
 
 	

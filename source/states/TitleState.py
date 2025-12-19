@@ -48,20 +48,21 @@ class TitleState(State):
 
 	def setup(self):
 		super().setup()
+		self.title_music = AssetManager.load_sound("titleScreen/music", "assets/sounds/TitleMenu/freakyMenu.ogg")
+		Conductor.load_audio(self.title_music, bpm_override = 102)
 
 		self.intro_line0, self.intro_line1 = get_random_intro_line().split('--')
 		
 		# Stuff for the intro text animation
 		self.accepted: bool   = False
 		self.confirm_timer    = 0.0
-		self.CONFIRM_DURATION = 4 * self.secs_per_beat      # = 4 beats in seconds
-		self.confirm_text_frm = 0                           # We use this to determine the color of the main menu text
+		self.CONFIRM_DURATION = 4 * Conductor.beat_length_ms      # = 4 beats in seconds
+		self.confirm_text_frm = 0                                 # We use this to determine the color of the main menu text
 
 		self.flash_group = arc.SpriteList()
 		self.ngl_group   = arc.SpriteList()
 
-		# Load title screen assets
-		self.title_music  = AssetManager.load_sound("titleScreen/music", "assets/sounds/TitleMenu/freakyMenu.ogg")
+		# load title screen assets
 		self.title_image  = AssetManager.load_image("titleScreen/title", "assets/images/TitleMenu/logoBumpin.png")   # Title Logo
 		self.gf_image     = AssetManager.load_image("titleScreen/gf",    "assets/images/TitleMenu/gfDanceTitle.png")  # Girlfriend on Speakers Image
 		self.stage_images = [
