@@ -8,6 +8,7 @@ from AssetManager import *
 from StateManager import *
 from Input import *
 from utils import *
+from Conductor import *
 import math
 import random
 
@@ -236,8 +237,8 @@ class TitleState(State):
 			self.intro_timer = 0
 			self.cool_text_arc.text = ""
 			self.flash_alpha = 1.0
-			# Start the badass music
-			arc.play_sound(self.title_music.sound, loop=True)
+			# Start the badass music (override BPM to 102 just to be safe)
+			Conductor.play_audio(self.title_music, bpm_override = 102)
 			return
 
 		if self.beat >= 16:
@@ -246,46 +247,74 @@ class TitleState(State):
 			self.flash.alpha -= self.FLASH_ALPHA_DECREASE * (1 / 60) if self.flash_alpha > 0 else 0
 		else:
 			self.cool_text_arc.draw() # Draw the intro text because Arcade likes the draw() call here (fk this man)
-		
-		self.ngl_group.draw()
-		
+		    self.ngl_group.draw()
+
+	
+    ##=============== UPDATE LOGIC ===============##
+
 
 	def on_update(self, dt: float):
+		# --- timer advancement ---
+		self._advance_timers(dt)
+
+		# --- animation stuff ---
+		self._update_textures()
+
+		# --- state & menu text handling ---
+		if self.accepted:
+			self._handle_confirm()
+		else:
+			self._decay_text_size()
+		
+		# --- update beats ---
+		self._handle_beat(dt)
+
+		# --- input polling ---
+		self._handle_input()
+
+	
+	def _update_textures(self):
 		# Increment animation frames by the animation factors (to effectively animate at desired FPS)
 		self.gf_animation_frame   += self.ANIMATION_FACTOR
 		self.logo_animation_frame += self.ANIMATION_FACTOR
 
+
+    def _advance_timers(self):
 		# Increment the intro and confirm text timers
 		self.intro_timer += dt
 		self.confirm_text_frm += 1
-		
-		# Confirm animation stuff
-		if self.accepted:
-			# Flash the menu text yellow
-			if self.confirm_text_frm % self.CONFIRM_COLOR_FRAME_NUMBER >= (self.CONFIRM_COLOR_FRAME_NUMBER / 2):
-				self.menu_text.color = self.MENU_TEXT_COL1
-			else:
-				self.menu_text.color = self.MENU_TEXT_COL2
 
-			# Set the text size
-			self.confirm_timer += dt
-			t = min(self.confirm_timer / self.CONFIRM_DURATION, 1.0)
-			
-			self.menu_text.font_size = linearLerp(self.MENU_TEXT_SIZE, self.MENU_TEXT_CONFIRM_SIZE, easeOut(t))
-			self._world_camera.zoom  = linearLerp(1.0, self.CAM_CONFIRM_TARGET_ZOOM, easeOut(t))
-			if self.confirm_timer >= self.CONFIRM_DURATION:
-				StateManager.show_state("mainMenu")
+
+	def _handle_confirm(self):
+		# Flash the menu text yellow
+		if self.confirm_text_frm % self.CONFIRM_COLOR_FRAME_NUMBER >= (self.CONFIRM_COLOR_FRAME_NUMBER / 2):
+			self.menu_text.color = self.MENU_TEXT_COL1
 		else:
-			# Smooth the menu text back to its normal size
-			self.menu_text.font_size -= (self.menu_text.font_size - self.MENU_TEXT_SIZE) * dt
+			self.menu_text.color = self.MENU_TEXT_COL2
 
-		# Beat stuff
-		if self.intro_timer > self.secs_per_beat:
-			self.beat += 1
-			self.intro_timer = 0
+		# Set the text size
+		self.confirm_timer += dt
+		t = min(self.confirm_timer / self.CONFIRM_DURATION, 1.0)
+			
+		self.menu_text.font_size = linearLerp(self.MENU_TEXT_SIZE, self.MENU_TEXT_CONFIRM_SIZE, easeOut(t))
+		self._world_camera.zoom  = linearLerp(1.0, self.CAM_CONFIRM_TARGET_ZOOM, easeOut(t))
+		
+		if self.confirm_timer >= self.CONFIRM_DURATION:
+			StateManager.show_state("mainMenu")
+	
+    def _decay_text_size(self):
+		# Smooth the menu text back to its normal size
+		self.menu_text.font_size -= (self.menu_text.font_size - self.MENU_TEXT_SIZE) * dt
+
+
+    def _handle_beat(self, dt):
+		# Check in with the Conductor
+		beat_check, _ = Conductor.update(dt)
+		if beat_check:
 			self.beat_hit()
 		
-		# Input polling
+
+    def _handle_input(self):
 		for event in self.input_manager.poll():
 			if event.act_type == InputEvent.Pressed and event.action == Keybind.Return:
 				arc.exit()
@@ -299,8 +328,10 @@ class TitleState(State):
 					self.accepted = True
 					self.confirm_timer = 0.0
 	
+
 	def playConfirm(self):
 		if self.accepted:
 			return
 		confirm_sound = AssetManager.load_sound("shared/menuConfirm", "assets/sounds/shared/confirmMenu.ogg")
 		arc.play_sound(confirm_sound.sound)
+
