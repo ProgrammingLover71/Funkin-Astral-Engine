@@ -5,7 +5,6 @@
 # A `State` is an Arcade `View` that features extra methods that facilitate switching via the manager.
 
 import arcade as arc
-from abc import ABCMeta
 
 
 ###============ State Class ============###
