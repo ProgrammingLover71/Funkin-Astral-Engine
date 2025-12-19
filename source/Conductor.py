@@ -32,7 +32,7 @@ class Conductor:
 	beat_length_ms: float		# How many milliseconds a beat lasts
 	step_length_ms: float		# How many milliseconds a step lasts
 
-    current_beat: int = -1
+	current_beat: int = -1
 	current_step: int = -1
 
 	bpm_cache: dict[str, BPMData] = {}	# The BPM cache for all loaded songs
@@ -73,7 +73,7 @@ class Conductor:
 	def computeMeasureTimes(cls, audio: SoundAsset, bpm_override: float | None = None):
 		if bpm_override == None:
 			bpm_data = cls.getStartingBPM(audio)
-		    measure_time_s = 60 / bpm_data.bpm
+			measure_time_s = 60 / bpm_data.bpm
 		else:
 			measure_time_s = 60 / bpm_override
 		beat_time_s = measure_time_s * 4
@@ -84,11 +84,11 @@ class Conductor:
 		cls.bpm_cache[audio.sound_path].step_length_ms		= 1000.0 * step_time_s
 
 
-    @classmethod
+	@classmethod
 	def update(cls, dt: float):
 		cls.song_position += dt
 
-        # Compute the current beat and step positions
+		# Compute the current beat and step positions
 		new_beat = int(cls.song_position / (cls.beat_length_ms / 1000.0))
 		new_step = int(cls.song_position / (cls.step_length_ms / 1000.0))
 

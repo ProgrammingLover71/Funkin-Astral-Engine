@@ -247,10 +247,10 @@ class TitleState(State):
 			self.flash.alpha -= self.FLASH_ALPHA_DECREASE * (1 / 60) if self.flash_alpha > 0 else 0
 		else:
 			self.cool_text_arc.draw() # Draw the intro text because Arcade likes the draw() call here (fk this man)
-		    self.ngl_group.draw()
+			self.ngl_group.draw()
 
 	
-    ##=============== UPDATE LOGIC ===============##
+	##=============== UPDATE LOGIC ===============##
 
 
 	def on_update(self, dt: float):
@@ -279,7 +279,7 @@ class TitleState(State):
 		self.logo_animation_frame += self.ANIMATION_FACTOR
 
 
-    def _advance_timers(self):
+	def _advance_timers(self):
 		# Increment the intro and confirm text timers
 		self.intro_timer += dt
 		self.confirm_text_frm += 1
@@ -302,19 +302,19 @@ class TitleState(State):
 		if self.confirm_timer >= self.CONFIRM_DURATION:
 			StateManager.show_state("mainMenu")
 	
-    def _decay_text_size(self):
+	def _decay_text_size(self):
 		# Smooth the menu text back to its normal size
 		self.menu_text.font_size -= (self.menu_text.font_size - self.MENU_TEXT_SIZE) * dt
 
 
-    def _handle_beat(self, dt):
+	def _handle_beat(self, dt):
 		# Check in with the Conductor
 		beat_check, _ = Conductor.update(dt)
 		if beat_check:
 			self.beat_hit()
 		
 
-    def _handle_input(self):
+	def _handle_input(self):
 		for event in self.input_manager.poll():
 			if event.act_type == InputEvent.Pressed and event.action == Keybind.Return:
 				arc.exit()
