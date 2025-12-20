@@ -9,6 +9,7 @@ from states.MainMenuState import MainMenuState
 from AssetManager import *
 from StateManager import *
 from Input import *
+from Conductor import Conductor
 
 
 class Astral(arc.Window):
@@ -17,6 +18,7 @@ class Astral(arc.Window):
 
 		# Set up the state manager and all other managers
 		StateManager.init(self)
+		self.conductor	 = Conductor()
 		self.inp_manager = InputManager()
 		self.kb_source   = KeyboardSource()
 		self.inp_manager.add_source(self.kb_source)
@@ -25,7 +27,7 @@ class Astral(arc.Window):
 		self.current_time = 0
 
 		# Set up the game states
-		self.title_state    = TitleState(self, self.inp_manager)
+		self.title_state    = TitleState(self, self.inp_manager, self.conductor)
 		self.mainMenu_state = MainMenuState(self, self.inp_manager)
 
 		StateManager.register_state("title", self.title_state)

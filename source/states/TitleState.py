@@ -24,40 +24,42 @@ class TitleState(State):
 
 	#====== Config numbers ======#
 
-	ANIMATION_FACTOR: float = 102 / 120     # Controls how fast the animations are (102/60 -> 4 times a measure, 102/120 -> 2 times a measure)
+	ANIMATION_FACTOR: float = 102 / 240     # Controls how fast the animations are (102/240 -> once a measure)
 	FLASH_ALPHA_DECREASE: float = 128       # How much to decrease the flashbang's alpha by every second
 	CONFIRM_COLOR_FRAME_NUMBER: int = 12    # How long a cycle lasts when changing the menu text color after pressing [Accept]
 	MENU_TEXT_COL1: arc.color.Color = arc.color.WHITE    # The main color for the menu text
 	MENU_TEXT_COL2: arc.color.Color = arc.color.YELLOW   # The secondary color for the menu text
 	MENU_TEXT_SIZE: float = 34              # The size the menu text has by default
+	MENU_TEXT_SIZE_DECAY_FACTOR: int = 4	# How many times faster should the text size decay towards the original size
 	MENU_TEXT_CONFIRM_SIZE: float = 40      # The size the menu text grows towards when pressing [Accept]
 	CAM_CONFIRM_TARGET_ZOOM: float = 0.9    # The zoom towards which the camera eases when pressing [Accept]
 
 	#====== Actual game logic ======#
 
-	def __init__(self, window: arc.Window, inp_mgr: InputManager):
+	def __init__(self, window: arc.Window, inp_mgr: InputManager, conductor: Conductor):
 		super().__init__(window, background_color = arc.color.BLACK)
 		self.gf_animation_frame   = 0
 		self.logo_animation_frame = 0
 
 		self.rendering = False
-		self.intro_skipped = False
+		self.intro_finished = False
 
-		self.input_manager = inp_mgr
+		self.input_manager	= inp_mgr
+		self.conductor		= conductor
 
 
 	def setup(self):
 		super().setup()
 		self.title_music = AssetManager.load_sound("titleScreen/music", "assets/sounds/TitleMenu/freakyMenu.ogg")
-		Conductor.load_audio(self.title_music, bpm_override = 102)
+		self.conductor.load_audio(self.title_music, bpm_override = 102)
 
 		self.intro_line0, self.intro_line1 = get_random_intro_line().split('--')
 		
 		# Stuff for the intro text animation
 		self.accepted: bool   = False
 		self.confirm_timer    = 0.0
-		self.CONFIRM_DURATION = 4 * Conductor.beat_length_ms      # = 4 beats in seconds
-		self.confirm_text_frm = 0                                 # We use this to determine the color of the main menu text
+		self.CONFIRM_DURATION = self.conductor.measure_length_ms / 1000.0	# = 4 beats in seconds
+		self.confirm_text_frm = 0                                 			# We use this to determine the color of the main menu text
 
 		self.flash_group = arc.SpriteList()
 		self.ngl_group   = arc.SpriteList()
@@ -146,7 +148,10 @@ class TitleState(State):
 		self.cool_text = ""
 	
 	def beat_hit(self):
-		
+		# Increment the beat (yes i forgot to do this when i wired the conductor)
+		self.beat += 1
+
+		# Check the beats
 		if self.beat == 1:
 			self.INTRO_addText("The")
 		elif self.beat == 2:
@@ -198,7 +203,7 @@ class TitleState(State):
 			self.INTRO_addText("")
 			self.INTRO_addText("(thx for playing astral)")
 		elif self.beat >= 16:
-			self.intro_skipped = True
+			self.intro_finished = True
 			if not self.accepted: self.menu_text.font_size += 2
 		
 		self.cool_text_arc.text = self.cool_text
@@ -236,7 +241,7 @@ class TitleState(State):
 			self.cool_text_arc.text = ""
 			self.flash_alpha = 1.0
 			# Start the badass music (override BPM to 102 just to be safe)
-			Conductor.play_audio(self.title_music, bpm_override = 102)
+			self.conductor.play_audio(self.title_music, bpm_override = 102)
 			return
 
 		if self.beat >= 16:
@@ -260,9 +265,9 @@ class TitleState(State):
 
 		# --- state & menu text handling ---
 		if self.accepted:
-			self._handle_confirm()
+			self._handle_confirm(dt)
 		else:
-			self._decay_text_size()
+			self._decay_text_size(dt)
 		
 		# --- update beats ---
 		self._handle_beat(dt)
@@ -277,13 +282,13 @@ class TitleState(State):
 		self.logo_animation_frame += self.ANIMATION_FACTOR
 
 
-	def _advance_timers(self):
+	def _advance_timers(self, dt):
 		# Increment the intro and confirm text timers
 		self.intro_timer += dt
 		self.confirm_text_frm += 1
 
 
-	def _handle_confirm(self):
+	def _handle_confirm(self, dt):
 		# Flash the menu text yellow
 		if self.confirm_text_frm % self.CONFIRM_COLOR_FRAME_NUMBER >= (self.CONFIRM_COLOR_FRAME_NUMBER / 2):
 			self.menu_text.color = self.MENU_TEXT_COL1
@@ -300,14 +305,14 @@ class TitleState(State):
 		if self.confirm_timer >= self.CONFIRM_DURATION:
 			StateManager.show_state("mainMenu")
 	
-	def _decay_text_size(self):
+	def _decay_text_size(self, dt):
 		# Smooth the menu text back to its normal size
-		self.menu_text.font_size -= (self.menu_text.font_size - self.MENU_TEXT_SIZE) * dt
+		self.menu_text.font_size -= (self.menu_text.font_size - self.MENU_TEXT_SIZE) * self.MENU_TEXT_SIZE_DECAY_FACTOR * dt
 
 
 	def _handle_beat(self, dt):
-		# Check in with the Conductor
-		beat_check, _ = Conductor.update(dt)
+		# Check in with the conductor
+		beat_check, _ = self.conductor.update(dt)
 		if beat_check:
 			self.beat_hit()
 		
@@ -318,8 +323,8 @@ class TitleState(State):
 				arc.exit()
 			
 			if event.act_type == InputEvent.Pressed and event.action == Keybind.Accept:
-				if not self.intro_skipped:
-					self.intro_skipped = True
+				if not self.intro_finished:
+					self.intro_finished = True
 					self.beat = 16
 				elif not self.accepted:
 					self.playConfirm()

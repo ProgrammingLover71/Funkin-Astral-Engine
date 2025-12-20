@@ -26,7 +26,7 @@ class BPMData:
 
 class Conductor:
 	song_position: float	# Where we are in the song
-	bpm_data: float			# The current song's BPM
+	bpm_data: BPMData		# The current song's BPM
 
 	measure_length_ms: float	# How many milliseconds a measure lasts
 	beat_length_ms: float		# How many milliseconds a beat lasts
@@ -37,71 +37,94 @@ class Conductor:
 
 	bpm_cache: dict[str, BPMData] = {}	# The BPM cache for all loaded songs
 
-
-	@classmethod
-	def load_audio(cls, audio: SoundAsset, bpm_override: float | None = None):
-		cls.song_position = 0.0
-		cls.bpm_data = cls.getStartingBPM(audio)
-		if bpm_override == None:
-			target_bpm = cls.bpm_data
-		else:
-			target_bpm = bpm_override
-		cls.computeMeasureTimes(audio, target_bpm)
-		# Load the step/beat/measure times
-		cls.measure_length_ms 	= cls.bpm_cache[audio.sound_path].measure_length_ms
-		cls.beat_length_ms 		= cls.bpm_cache[audio.sound_path].beat_length_ms
-		cls.step_length_ms 		= cls.bpm_cache[audio.sound_path].step_length_ms
+	def __init__(self):
+		self.reset()
 	
-	@classmethod
-	def play_audio(cls, audio: SoundAsset, bpm_override: float | None = None):
+	
+	def reset(self):
+		self.song_position = 0.0
+		self.bpm_data = None
+		self.measure_length_ms	= 0.0
+		self.beat_length_ms		= 0.0
+		self.step_length_ms		= 0.0
+		self.current_beat 		= -1
+		self.current_step		= -1
+	
+	def load_audio(self, audio: SoundAsset, bpm_override: float | None = None):
+		# Prep the conductor for playing the song
+		self.song_position	= 0.0
+		self.current_beat	= 0
+		self.current_step	= 0
+
+		if bpm_override == None:
+			self.bpm_data = self.getBPMData(audio)
+			target_bpm = self.bpm_data.bpm
+		else:
+			# Make the data ourselves instead of computing it like morons
+			self.bpm_cache[audio.sound_path] = BPMData(bpm_override, 0, 0, 0)
+			self.bpm_data = self.bpm_cache[audio.sound_path]
+			target_bpm = bpm_override
+		self.computeMeasureTimes(audio, target_bpm)
+		# Load the step/beat/measure times
+		self.measure_length_ms 	= self.bpm_cache[audio.sound_path].measure_length_ms
+		self.beat_length_ms 		= self.bpm_cache[audio.sound_path].beat_length_ms
+		self.step_length_ms 		= self.bpm_cache[audio.sound_path].step_length_ms
+	
+	
+	def play_audio(self, audio: SoundAsset, bpm_override: float | None = None):
 		# Load the step/beat/measure times and play the audio
-		cls.load_audio(audio, bpm_override = bpm_override)
+		self.load_audio(audio, bpm_override = bpm_override)
 		arc.sound.play_sound(audio.sound)
 
 	
-	@classmethod
-	def getStartingBPM(cls, audio: SoundAsset):
+	
+	def getBPMData(self, audio: SoundAsset):
 		# Load the sound using librosa and estimate the BPM (if we didn't already)
-		if cls.bpm_cache.get(audio.sound_path) == None:
-			y, sr = librosa.load(audio.sound_path, sr=None, mono=False)
+		if self.bpm_cache.get(audio.sound_path) == None:
+			# Downsample and cut the song so we can quickly get its BPM faster
+			y, sr = librosa.load(audio.sound_path, sr=11025, mono=True)
+			y, _ = librosa.effects.trim(y, top_db=20)
+
 			onset_env = librosa.onset.onset_strength(y=y, sr=sr)
 			_, beats = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr)
 			beat_times = librosa.frames_to_time(beats, sr=sr)
 			intervals = np.diff(beat_times)
 			# Calculate the average BPM for the song and cache it
 			bpms = 60 / intervals
-			cls.bpm_cache[audio.sound_path] = BPMData(np.median(bpms), 0, 0)
-		return cls.bpm_cache[audio.sound_path]
+			self.bpm_cache[audio.sound_path] = BPMData(np.median(bpms), 0, 0, 0)
+
+		return self.bpm_cache[audio.sound_path]
 	
 
-	@classmethod
-	def computeMeasureTimes(cls, audio: SoundAsset, bpm_override: float | None = None):
+	
+	def computeMeasureTimes(self, audio: SoundAsset, bpm_override: float | None = None):
 		if bpm_override == None:
-			bpm_data = cls.getStartingBPM(audio)
-			measure_time_s = 60 / bpm_data.bpm
+			bpm_data = self.getBPMData(audio)
+			beat_time_s = 60 / bpm_data.bpm
 		else:
-			measure_time_s = 60 / bpm_override
-		beat_time_s = measure_time_s * 4
-		step_time_s = measure_time_s * 16
+			beat_time_s = 60 / bpm_override
+		measure_time_s	= beat_time_s * 4
+		step_time_s		= beat_time_s / 4
 		# Store the values in the BPM cache
-		cls.bpm_cache[audio.sound_path].measure_length_ms 	= 1000.0 * measure_time_s
-		cls.bpm_cache[audio.sound_path].beat_length_ms 		= 1000.0 * beat_time_s
-		cls.bpm_cache[audio.sound_path].step_length_ms		= 1000.0 * step_time_s
+		self.bpm_cache[audio.sound_path].measure_length_ms 	= 1000.0 * measure_time_s
+		self.bpm_cache[audio.sound_path].beat_length_ms 	= 1000.0 * beat_time_s
+		self.bpm_cache[audio.sound_path].step_length_ms		= 1000.0 * step_time_s
+		
 
 
-	@classmethod
-	def update(cls, dt: float):
-		cls.song_position += dt
+	
+	def update(self, dt: float):
+		self.song_position += dt
 
 		# Compute the current beat and step positions
-		new_beat = int(cls.song_position / (cls.beat_length_ms / 1000.0))
-		new_step = int(cls.song_position / (cls.step_length_ms / 1000.0))
+		new_beat = int(self.song_position / (self.beat_length_ms / 1000.0))
+		new_step = int(self.song_position / (self.step_length_ms / 1000.0))
 
-		beat_just_hit = (new_beat != cls.current_beat)
-		step_just_hit = (new_step != cls.current_step)
+		beat_just_hit = (new_beat != self.current_beat)
+		step_just_hit = (new_step != self.current_step)
 
-		cls.current_beat = new_beat
-		cls.current_step = new_step
-
+		self.current_beat = new_beat
+		self.current_step = new_step
+		
 		return beat_just_hit, step_just_hit
 
