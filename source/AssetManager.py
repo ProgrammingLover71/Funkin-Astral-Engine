@@ -1,6 +1,6 @@
 # Friday Night Funkin' Astral Engine
 
-### Asset Manager Module
+### Asset Manager
 # This module handles the loading and management of game assets such as images, sounds, and fonts.
 # It uses different classes to organize assets based on their types.
 
@@ -53,7 +53,7 @@ class ImageAsset:
 		`atlas_path` (str | None): The file path to the accompanying XML atlas, if applicable.
 		`texture` (arc.Texture | list[arc.Texture] | None): The loaded texture or list of textures.
 	"""
-	def __init__(self, image_path: str):
+	def __init__(self, image_path: str) -> None:
 		self.image_path = image_path
 		self.atlas_path = None
 		self.texture: arc.Texture | list[arc.Texture] = None
@@ -64,7 +64,7 @@ class ImageAsset:
 		self.texture = texture
 
 	@staticmethod
-	def load(image_path: str):
+	def load(image_path: str) -> "ImageAsset":
 		"""
 		Loads an image asset. If the image is static (no accompanying XML), it loads it as a single texture. \n
 		If the image is dynamic (has accompanying XML), it loads it as a texture atlas.
@@ -128,7 +128,7 @@ class ImageAsset:
 	#======== Non-Static Members ========#
 	
 
-	def apply_brightness(self, factor: float):
+	def apply_brightness(self, factor: float) -> "ImageAsset":
 		"""
 		Apply the brightness to the image asset's texture(s).
 		Args:
@@ -155,7 +155,7 @@ class ImageAsset:
 		return ImageAsset(brightened_texture, image_path=self.image_path, atlas_path=self.atlas_path)
 	
 
-	def apply_scale(self, scale: float):
+	def apply_scale(self, scale: float) -> "ImageAsset":
 		"""
 		Applies a scaling factor to the image asset's texture(s). \n
 		*Warning*: Scales applied with this method are stackable, so be careful not to over-scale or under-scale.
@@ -183,12 +183,12 @@ class SoundAsset:
 		`sound_path` (str): The file path to the sound.
 		`sound` (arc.Sound | None): The loaded sound object.
 	"""
-	def __init__(self, sound_path: str):
+	def __init__(self, sound_path: str) -> None:
 		self.sound_path = sound_path
 		self.sound: arc.Sound = None
 
 	@staticmethod
-	def load(sound_path: str):
+	def load(sound_path: str) -> "SoundAsset":
 		"""
 		Loads a sound asset.
 
@@ -213,11 +213,11 @@ class FontAsset:
 		`font_path` (str): The file path to the font.
 		`image` (ImageAsset | None): The loaded font image asset (as a TTF).
 	"""
-	def __init__(self, font_path: str):
+	def __init__(self, font_path: str) -> None:
 		self.font_path = font_path
 
 	@staticmethod
-	def load(font_path: str):
+	def load(font_path: str) -> "FontAsset":
 		"""
 		Loads a font asset.
 
@@ -241,12 +241,12 @@ class TextFileAsset:
 		`file_path` (str): The file path to the text file.
 		`content` (str | None): The loaded text content.
 	"""
-	def __init__(self, file_path: str):
+	def __init__(self, file_path: str) -> None:
 		self.file_path = file_path
 		self.content: str = None
 
 	@staticmethod
-	def load(file_path: str):
+	def load(file_path: str) -> "TextFileAsset":
 		"""
 		Loads a text file asset.
 
@@ -283,7 +283,7 @@ class AssetManager:
 	text_files: dict[str, TextFileAsset] = {}
 
 	@classmethod
-	def load_image(cls, name: str, image_path: str = None):
+	def load_image(cls, name: str, image_path: str = None) -> ImageAsset:
 		"""
 		Loads an image asset and stores it in the asset manager.
 
@@ -302,7 +302,7 @@ class AssetManager:
 
 	
 	@classmethod
-	def load_sound(cls, name: str, sound_path: str = None):
+	def load_sound(cls, name: str, sound_path: str = None) -> SoundAsset:
 		"""
 		Loads a sound asset and stores it in the asset manager.
 
@@ -317,7 +317,7 @@ class AssetManager:
 
 
 	@classmethod
-	def load_font(cls, name: str, font_path: str = None):
+	def load_font(cls, name: str, font_path: str = None) -> FontAsset:
 		"""
 		Loads a font asset and stores it in the asset manager.
 
@@ -332,7 +332,7 @@ class AssetManager:
 	
 
 	@classmethod
-	def load_text_file(cls, name: str, file_path: str = None):
+	def load_text_file(cls, name: str, file_path: str = None) -> TextFileAsset:
 		"""
 		Loads a text file asset and stores it in the asset manager.
 
@@ -348,7 +348,7 @@ class AssetManager:
 		return cls.text_files[name]
 
 	@staticmethod
-	def load_shared_sounds():
+	def load_shared_sounds() -> None:
 		"""
 		Loads all shared sounds for the game, including action confirm, return sounds, etc.
 		"""

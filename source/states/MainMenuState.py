@@ -1,6 +1,6 @@
 # Friday Night Funkin' Astral Engine
 
-### Main Menu Module
+### Main Menu State
 # This module defines the MainMenuState class, which represents the main menu.
 # It appears after the title screen.
 
@@ -13,7 +13,7 @@ import math
 
 class MainMenuState(State):
 	def __init__(self, window: arc.Window, inp_mgr: InputManager):
-		super().__init__(window, background_color = arc.color.BLACK)
+		super().__init__(window)
 		self.input_manager = inp_mgr
 
 	def setup(self):
@@ -41,18 +41,18 @@ class MainMenuState(State):
 		self.btn_sprites.append(self.options_spr)
 	
 
-	def on_draw(self):
+	def draw(self):
 		self.clear()
 		self._world_camera.use()
 
 		# Draw everything
-		draw_tex(self, self.menu_bg.texture, 
+		draw_tex(self.menu_bg.texture, 
 				 self._world_camera.position.x,
 				 self._world_camera.position.y)
 		self.btn_sprites.draw()
 	
 
-	def on_update(self, dt):
+	def update(self, dt):
 		self.btn_texture_index += 1 / 20
 
 		cam_delta = (self.target_cam_y - self._world_camera.position.y) * 8 * dt

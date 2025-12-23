@@ -1,6 +1,6 @@
 # Friday Night Funkin' Astral Engine
 
-### Main Module
+### Main
 # This is the main entry point for Astral.
 
 import arcade as arc

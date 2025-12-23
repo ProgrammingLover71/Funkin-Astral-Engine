@@ -1,12 +1,13 @@
 # Friday Night Funkin' Astral Engine
 
-### Conductor module
+### Conductor
 # The Conductor allows for precise music and beat handling for any and all states.
 
 import arcade as arc
 from StateManager import State
 from AssetManager import *
 import librosa
+import pyglet
 import numpy as np
 from dataclasses import dataclass
 
@@ -25,8 +26,10 @@ class BPMData:
 
 
 class Conductor:
-	song_position: float	# Where we are in the song
-	bpm_data: BPMData		# The current song's BPM
+	song_position: float				# Where we are in the song
+	bpm_data: BPMData					# The current song's BPM
+	music_player: pyglet.media.Player	# The music player for this song
+	current_song: arc.Sound				# The current sound
 
 	measure_length_ms: float	# How many milliseconds a measure lasts
 	beat_length_ms: float		# How many milliseconds a beat lasts
@@ -37,11 +40,11 @@ class Conductor:
 
 	bpm_cache: dict[str, BPMData] = {}	# The BPM cache for all loaded songs
 
-	def __init__(self):
+	def __init__(self) -> None:
 		self.reset()
 	
 	
-	def reset(self):
+	def reset(self) -> None:
 		self.song_position = 0.0
 		self.bpm_data = None
 		self.measure_length_ms	= 0.0
@@ -50,7 +53,7 @@ class Conductor:
 		self.current_beat 		= -1
 		self.current_step		= -1
 	
-	def load_audio(self, audio: SoundAsset, bpm_override: float | None = None):
+	def load_audio(self, audio: SoundAsset, bpm_override: float | None = None) -> None:
 		# Prep the conductor for playing the song
 		self.song_position	= 0.0
 		self.current_beat	= 0
@@ -71,14 +74,14 @@ class Conductor:
 		self.step_length_ms 		= self.bpm_cache[audio.sound_path].step_length_ms
 	
 	
-	def play_audio(self, audio: SoundAsset, bpm_override: float | None = None):
+	def play_audio(self, audio: SoundAsset, bpm_override: float | None = None) -> None:
 		# Load the step/beat/measure times and play the audio
 		self.load_audio(audio, bpm_override = bpm_override)
-		arc.sound.play_sound(audio.sound)
+		self.current_song = audio.sound
+		self.music_player = arc.sound.play_sound(audio.sound)
 
 	
-	
-	def getBPMData(self, audio: SoundAsset):
+	def getBPMData(self, audio: SoundAsset) -> BPMData:
 		# Load the sound using librosa and estimate the BPM (if we didn't already)
 		if self.bpm_cache.get(audio.sound_path) == None:
 			# Downsample and cut the song so we can quickly get its BPM faster
@@ -97,7 +100,7 @@ class Conductor:
 	
 
 	
-	def computeMeasureTimes(self, audio: SoundAsset, bpm_override: float | None = None):
+	def computeMeasureTimes(self, audio: SoundAsset, bpm_override: float | None = None) -> None:
 		if bpm_override == None:
 			bpm_data = self.getBPMData(audio)
 			beat_time_s = 60 / bpm_data.bpm
@@ -110,11 +113,9 @@ class Conductor:
 		self.bpm_cache[audio.sound_path].beat_length_ms 	= 1000.0 * beat_time_s
 		self.bpm_cache[audio.sound_path].step_length_ms		= 1000.0 * step_time_s
 		
-
-
 	
-	def update(self, dt: float):
-		self.song_position += dt
+	def update(self) -> tuple[bool, bool]:
+		self.song_position = self.current_song.get_stream_position(self.music_player)
 
 		# Compute the current beat and step positions
 		new_beat = int(self.song_position / (self.beat_length_ms / 1000.0))

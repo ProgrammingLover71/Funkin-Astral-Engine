@@ -1,6 +1,6 @@
 # Friday Night Funkin' Astral Engine
 
-### Title State Module
+### Title State
 # This module defines the TitleState class, which represents the title screen of the game.
 # It appears first when the game is launched.
 
@@ -14,6 +14,7 @@ import random
 
 
 #========== Intro text utility ==========#
+
 def get_random_intro_line() -> str:
 	intro_text_asset = AssetManager.load_text_file("introText", "assets/introText.txt")
 	intro_lines = intro_text_asset.content.splitlines()
@@ -24,7 +25,7 @@ class TitleState(State):
 
 	#====== Config numbers ======#
 
-	ANIMATION_FACTOR: float = 102 / 240     # Controls how fast the animations are (102/240 -> once a measure)
+	ANIMATION_FACTOR: float = 102 / 120     # Controls how fast the animations are (102/120 -> twice a measure) - formula is bpm / 60 * (how many times to loop in a measure / 4)
 	FLASH_ALPHA_DECREASE: float = 128       # How much to decrease the flashbang's alpha by every second
 	CONFIRM_COLOR_FRAME_NUMBER: int = 12    # How long a cycle lasts when changing the menu text color after pressing [Accept]
 	MENU_TEXT_COL1: arc.color.Color = arc.color.WHITE    # The main color for the menu text
@@ -37,7 +38,7 @@ class TitleState(State):
 	#====== Actual game logic ======#
 
 	def __init__(self, window: arc.Window, inp_mgr: InputManager, conductor: Conductor):
-		super().__init__(window, background_color = arc.color.BLACK)
+		super().__init__(window)
 		self.gf_animation_frame   = 0
 		self.logo_animation_frame = 0
 
@@ -109,10 +110,9 @@ class TitleState(State):
 
 
 		# Values for the flashbang
-		self.flash_alpha = 255.0
-
 		self.flash_img = AssetManager.load_image("titleScreen/flashbang", "assets/images/shared/flashbang.png")
 		self.flash = arc.Sprite(self.flash_img.texture, center_x = 0, center_y = 0)
+		self.flash.alpha = 255
 
 		self.flash_group.append(self.flash)
 
@@ -213,41 +213,38 @@ class TitleState(State):
 	def draw_main(self):
 		# isn't the draw_tex helper lovely? :>
 		# Draw the stage
-		draw_tex(self, self.stage_images[0].texture, 0, -100)  # Back
-		draw_tex(self, self.stage_images[1].texture, 0, -250)  # Curtains
-		draw_tex(self, self.stage_images[2].texture, 0, -400)  # Front
+		draw_tex(self.stage_images[0].texture, 0, -100)  # Back
+		draw_tex(self.stage_images[1].texture, 0, -250)  # Curtains
+		draw_tex(self.stage_images[2].texture, 0, -400)  # Front
 
 		# Draw the girlfriend on speakers
-		draw_tex(self, self.gf_image.texture[math.floor(self.gf_animation_frame) % 30], 0, -230)
+		draw_tex(self.gf_image.texture[math.floor(self.gf_animation_frame) % 30], 0, -230)
 
 		# Draw the logo
-		draw_tex(self, self.title_image.texture[math.floor(self.logo_animation_frame) % 15], 0, 140)
-
+		draw_tex(self.title_image.texture[math.floor(self.logo_animation_frame) % 15], 0, 140)
 
 		# Draw the main text
 		self.menu_text.draw()
 	
 
-	def on_draw(self):
-		self.clear()
-		self._world_camera.use()
-
-		# On the first render, start playing the title music and do some other one-time shit
-		if not self.rendering:
-			self.rendering = True
-			# Reset the text and timer because for some reason the lag at the start stacks the calls up (why the fk is there even lag when it starts)
+	def on_show_view(self):
+		# Reset the text and timer because for some reason the lag at the start stacks the calls up (why the fk is there even lag when it starts)
+		if not self.loaded:
 			self.beat = 0
 			self.intro_timer = 0
-			self.cool_text_arc.text = ""
-			self.flash_alpha = 1.0
 			# Start the badass music (override BPM to 102 just to be safe)
 			self.conductor.play_audio(self.title_music, bpm_override = 102)
-			return
+			self.cool_text_arc.text = ""
+	
+
+	def draw(self):
+		self.clear()
+		self._world_camera.use()
 
 		if self.beat >= 16:
 			self.draw_main()
 			self.flash_group.draw()
-			self.flash.alpha -= self.FLASH_ALPHA_DECREASE * (1 / 60) if self.flash_alpha > 0 else 0
+			self.flash.alpha -= self.FLASH_ALPHA_DECREASE * (1 / 60) if self.flash.alpha > 0 else 0
 		else:
 			self.cool_text_arc.draw() # Draw the intro text because Arcade likes the draw() call here (fk this man)
 			self.ngl_group.draw()
@@ -256,7 +253,7 @@ class TitleState(State):
 	##=============== UPDATE LOGIC ===============##
 
 
-	def on_update(self, dt: float):
+	def update(self, dt: float):
 		# --- timer advancement ---
 		self._advance_timers(dt)
 
@@ -303,7 +300,7 @@ class TitleState(State):
 		self._world_camera.zoom  = linearLerp(1.0, self.CAM_CONFIRM_TARGET_ZOOM, easeOut(t))
 		
 		if self.confirm_timer >= self.CONFIRM_DURATION:
-			StateManager.show_state("mainMenu")
+			StateManager.show_state_with_transition("mainMenu", StateManager.FadeTransition(duration=0.5))
 	
 	def _decay_text_size(self, dt):
 		# Smooth the menu text back to its normal size
@@ -312,7 +309,7 @@ class TitleState(State):
 
 	def _handle_beat(self, dt):
 		# Check in with the conductor
-		beat_check, _ = self.conductor.update(dt)
+		beat_check, _ = self.conductor.update()
 		if beat_check:
 			self.beat_hit()
 		
